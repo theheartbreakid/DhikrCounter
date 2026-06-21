@@ -13,7 +13,7 @@ jobs:
       - name: Set up Java Environment
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'zulu'
 
       - name: Decode Keystore from Secrets
