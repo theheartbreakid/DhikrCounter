@@ -3,6 +3,10 @@ on:
   push:
     tags: [ "v*" ] # This triggers the script only when you push a version tag like v1.0.0
 
+# ADD THESE THREE LINES RIGHT HERE:
+permissions:
+  contents: write
+  
 jobs:
   publish:
     runs-on: ubuntu-latest
