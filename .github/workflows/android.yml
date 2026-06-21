@@ -24,7 +24,7 @@ jobs:
         
     - name: Decode Keystore from Secrets
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/release-keystore.jks
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/release-keystore.jks
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
@@ -32,11 +32,11 @@ jobs:
     - name: Build Secure Release APK
       run: |
         ./gradlew assembleRelease \
-          -Pandroid.injected.signing.store.file=release-keystore.jks \
+          -Pandroid.injected.signing.store.file=${{ github.workspace }}/app/release-keystore.jks \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
           -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
-          -x test -x lint --stacktrace # Fixed: Added ignore-warning and diagnostic flags
+          -x test -x lint
 
     - name: Automatic GitHub Release
       uses: softprops/action-gh-release@v2
