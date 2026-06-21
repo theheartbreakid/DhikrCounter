@@ -1,0 +1,699 @@
+package com.Crescent.DhikrCounter.ui
+
+import android.provider.Settings
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.Crescent.DhikrCounter.data.SessionEntity
+import com.Crescent.DhikrCounter.ui.components.AnimatedCounter
+import com.Crescent.DhikrCounter.ui.components.ProgressRing
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CounterScreen(
+    viewModel: CounterViewModel,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToDashboard: () -> Unit
+) {
+    val context = LocalContext.current
+    val activeSession by viewModel.activeSession.observeAsState()
+    val isFloatingEnabled by viewModel.isFloatingEnabled.observeAsState(false)
+    val isAnimationEnabled by viewModel.isCountAnimationEnabled.observeAsState(true)
+    val cornerRadius by viewModel.cornerRadius.observeAsState(24f)
+    val allSessions by viewModel.allSessions.observeAsState(emptyList())
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    
+    var showAddDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredSessions = allSessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(340.dp),
+                drawerContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                drawerShape = RoundedCornerShape(topEnd = cornerRadius.dp, bottomEnd = cornerRadius.dp)
+            ) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Sessions",
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .fillMaxWidth(),
+                    placeholder = { Text("Search sessions...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
+                )
+
+                Spacer(Modifier.height(8.dp))
+                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    item {
+                        NavigationDrawerItem(
+                            label = { Text("New Session", fontWeight = FontWeight.SemiBold) },
+                            selected = false,
+                            onClick = { 
+                                showAddDialog = true
+                                scope.launch { drawerState.close() }
+                            },
+                            icon = { Icon(Icons.Default.AddCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                    
+                    items(filteredSessions) { session ->
+                        val isSelected = activeSession?.id == session.id
+                        NavigationDrawerItem(
+                            label = { 
+                                Column {
+                                    Text(session.name, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                    if (session.category.isNotBlank()) {
+                                        Text(session.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            },
+                            selected = isSelected,
+                            onClick = {
+                                viewModel.setActiveSessionId(session.id)
+                                scope.launch { drawerState.close() }
+                            },
+                            icon = { 
+                                Icon(
+                                    if (isSelected) Icons.Default.CheckCircle else Icons.Outlined.Circle, 
+                                    contentDescription = null, 
+                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ) 
+                            },
+                            badge = { 
+                                Surface(
+                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        session.count.toString(),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                }
+                
+                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                
+                NavigationDrawerItem(
+                    label = { Text("Dashboard & Stats", fontWeight = FontWeight.Medium) },
+                    selected = false,
+                    onClick = {
+                        onNavigateToDashboard()
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Outlined.Analytics, contentDescription = null) },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                
+                NavigationDrawerItem(
+                    label = { Text("Settings", fontWeight = FontWeight.Medium) },
+                    selected = false,
+                    onClick = {
+                        onNavigateToSettings()
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            "DhikrCounter++", 
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
+                                val intent = android.content.Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    android.net.Uri.parse("package:${context.packageName}")
+                                )
+                                context.startActivity(intent)
+                            } else {
+                                viewModel.toggleFloatingCounter()
+                            }
+                        }) {
+                            Icon(
+                                if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
+                                contentDescription = "Toggle Floating Counter",
+                                tint = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+                            )
+                        )
+                    )
+                    .padding(paddingValues)
+            ) {
+                if (activeSession == null) {
+                    EmptySessionState(
+                        cornerRadius = cornerRadius,
+                        onAddClick = { showAddDialog = true }
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Top Section: Session Info
+                        SessionHeader(
+                            session = activeSession!!,
+                            cornerRadius = cornerRadius,
+                            onEditClick = { showEditDialog = true }
+                        )
+
+                        // Center Section: Counter & Ring
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val session = activeSession!!
+                            val progress = if (session.goalCount > 0) {
+                                (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
+                            } else 0f
+
+                            ProgressRing(
+                                progress = progress,
+                                modifier = Modifier.size(320.dp),
+                                strokeWidth = 32f
+                            )
+
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                AnimatedCounter(
+                                    count = session.count,
+                                    enabled = isAnimationEnabled,
+                                    textStyle = MaterialTheme.typography.displayLarge.copy(
+                                        fontSize = 80.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = (-2).sp
+                                    )
+                                )
+                                
+                                if (session.goalCount > 0) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                                        shape = RoundedCornerShape(cornerRadius.dp / 1.5f)
+                                    ) {
+                                        val remaining = maxOf(0, session.goalCount - session.count)
+                                        Text(
+                                            text = "$remaining remaining",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Below Counter: Progress Bar & Stats
+                        if (activeSession!!.goalCount > 0) {
+                            SessionProgressDetails(activeSession!!, cornerRadius)
+                        }
+
+                        // Bottom Section: Controls
+                        MainControls(
+                            onIncrement = { viewModel.increment() },
+                            onDecrement = { viewModel.decrement(false) },
+                            onReset = { viewModel.reset() },
+                            onEdit = { showEditDialog = true },
+                            isFloatingEnabled = isFloatingEnabled,
+                            cornerRadius = cornerRadius,
+                            onToggleFloating = {
+                                if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
+                                    val intent = android.content.Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        android.net.Uri.parse("package:${context.packageName}")
+                                    )
+                                    context.startActivity(intent)
+                                } else {
+                                    viewModel.toggleFloatingCounter()
+                                }
+                            }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(48.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        NewSessionDialog(
+            cornerRadius = cornerRadius,
+            onDismiss = { showAddDialog = false },
+            onConfirm = { name -> 
+                viewModel.addSession(name)
+                showAddDialog = false
+            }
+        )
+    }
+
+    if (showEditDialog && activeSession != null) {
+        EditSessionDialog(
+            session = activeSession!!,
+            cornerRadius = cornerRadius,
+            onDismiss = { showEditDialog = false },
+            onConfirm = { updated ->
+                viewModel.updateSession(updated)
+                showEditDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun EmptySessionState(cornerRadius: Float, onAddClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            Icons.Outlined.Layers, 
+            contentDescription = null, 
+            modifier = Modifier.size(100.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            "No Active Session", 
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Create a new session to start counting.", 
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onAddClick,
+            shape = RoundedCornerShape(cornerRadius.dp),
+            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Create Session", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun SessionHeader(session: SessionEntity, cornerRadius: Float, onEditClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onEditClick
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = RoundedCornerShape(cornerRadius.dp / 2)
+        ) {
+            Text(
+                text = session.category.ifBlank { "General" }.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                letterSpacing = 1.sp
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = session.name,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                Icons.Outlined.Edit, 
+                contentDescription = "Edit", 
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+        
+        if (session.goalCount > 0) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Goal: ${session.goalCount}",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun SessionProgressDetails(session: SessionEntity, cornerRadius: Float) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 16.dp)
+    ) {
+        val progress = (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
+        val percent = (progress * 100).toInt()
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                "Overall Progress",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                "$percent%",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(cornerRadius.dp / 2)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            strokeCap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+fun MainControls(
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    onReset: () -> Unit,
+    onEdit: () -> Unit,
+    isFloatingEnabled: Boolean,
+    cornerRadius: Float,
+    onToggleFloating: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Reset Button
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            FilledTonalIconButton(
+                onClick = onReset,
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(24.dp))
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Reset", style = MaterialTheme.typography.labelSmall)
+        }
+
+        // Floating Counter Toggle
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            FilledTonalIconButton(
+                onClick = onToggleFloating,
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = if (isFloatingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                Icon(
+                    if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
+                    contentDescription = "Floating Counter",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Floating", style = MaterialTheme.typography.labelSmall)
+        }
+
+        // Massive Increment Button
+        Button(
+            onClick = onIncrement,
+            modifier = Modifier
+                .size(120.dp),
+            shape = RoundedCornerShape(cornerRadius.dp * 1.5f),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 8.dp,
+                pressedElevation = 2.dp
+            ),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Icon(
+                Icons.Default.Add, 
+                contentDescription = "Increment", 
+                modifier = Modifier.size(64.dp)
+            )
+        }
+
+        // Decrement Button
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            FilledTonalIconButton(
+                onClick = onDecrement,
+                modifier = Modifier.size(56.dp),
+                shape = RoundedCornerShape(cornerRadius.dp / 1.5f)
+            ) {
+                Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(28.dp))
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Minus", style = MaterialTheme.typography.labelSmall)
+        }
+
+        // Edit/Settings Button
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            FilledTonalIconButton(
+                onClick = onEdit,
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape
+            ) {
+                Icon(Icons.Outlined.Tune, contentDescription = "Settings", modifier = Modifier.size(24.dp))
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Edit", style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+fun NewSessionDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var sessionName by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New Session", fontWeight = FontWeight.Bold) },
+        text = {
+            OutlinedTextField(
+                value = sessionName,
+                onValueChange = { sessionName = it },
+                label = { Text("Session Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(cornerRadius.dp / 2)
+            )
+        },
+        confirmButton = {
+            Button(onClick = { if (sessionName.isNotBlank()) onConfirm(sessionName) }) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
+}
+
+@Composable
+fun EditSessionDialog(session: SessionEntity, cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (SessionEntity) -> Unit) {
+    var name by remember { mutableStateOf(session.name) }
+    var category by remember { mutableStateOf(session.category) }
+    var goalStr by remember { mutableStateOf(if (session.goalCount > 0) session.goalCount.toString() else "") }
+    var incrementStr by remember { mutableStateOf(session.incrementValue.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Session", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(cornerRadius.dp / 2)
+                )
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = { category = it },
+                    label = { Text("Category (e.g. Morning, Custom)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(cornerRadius.dp / 2)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = goalStr,
+                        onValueChange = { goalStr = it.filter { char -> char.isDigit() } },
+                        label = { Text("Goal") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(cornerRadius.dp / 2)
+                    )
+                    OutlinedTextField(
+                        value = incrementStr,
+                        onValueChange = { incrementStr = it.filter { char -> char.isDigit() } },
+                        label = { Text("Step") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(cornerRadius.dp / 2)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { 
+                if (name.isNotBlank()) {
+                    val updated = session.copy(
+                        name = name,
+                        category = category,
+                        goalCount = goalStr.toLongOrNull() ?: 0L,
+                        incrementValue = incrementStr.toLongOrNull() ?: 1L
+                    )
+                    onConfirm(updated)
+                }
+            }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
+}

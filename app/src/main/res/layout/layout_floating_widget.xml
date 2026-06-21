@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <!-- The actual floating bubble -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/floating_bubble"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="12dp"
+        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+        android:layout_margin="8dp">
+
+        <TextView
+            android:id="@+id/text_floating_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="0"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_dark_onPrimaryContainer" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Expanded quick actions (Hidden by default) -->
+    <LinearLayout
+        android:id="@+id/layout_quick_actions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginTop="80dp"
+        android:visibility="gone"
+        android:background="@drawable/rounded_glass_bg"
+        android:padding="8dp">
+
+        <ImageButton
+            android:id="@+id/btn_floating_decrease"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_input_delete"
+            android:contentDescription="Decrease"
+            android:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_floating_reset"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Reset"
+            android:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_floating_open_app"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_view"
+            android:contentDescription="Open App"
+            android:tint="@android:color/white" />
+    </LinearLayout>
+
+</FrameLayout>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group android:checkableBehavior="single" android:id="@+id/menu_group_sessions">
+        <!-- Sessions will be populated dynamically here -->
+    </group>
+
+    <item android:title="Actions">
+        <menu>
+            <item
+                android:id="@+id/nav_add_session"
+                android:title="New Session" />
+            <item
+                android:id="@+id/nav_settings"
+                android:title="Settings" />
+        </menu>
+    </item>
+</menu>

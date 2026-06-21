@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Liquid Glass theme requires deep, rich backgrounds to show off the blur -->
+    <color name="glass_surface_light">#88FFFFFF</color>
+    <color name="glass_surface_dark">#88121212</color>
+    
+    <color name="glass_outline_light">#40FFFFFF</color>
+    <color name="glass_outline_dark">#40FFFFFF</color>
+    
+    <!-- Primary Theme Colors (Material You will override these on Android 12+) -->
+    <color name="md_theme_light_primary">#006495</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#CBE6FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001E30</color>
+    <color name="md_theme_light_secondary">#51606F</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#D4E4F6</color>
+    <color name="md_theme_light_onSecondaryContainer">#0D1D2A</color>
+    <color name="md_theme_light_background">#FCFCFF</color>
+    <color name="md_theme_light_onBackground">#1A1C1E</color>
+    <color name="md_theme_light_surface">#FCFCFF</color>
+    <color name="md_theme_light_onSurface">#1A1C1E</color>
+
+    <color name="md_theme_dark_primary">#8FCDFF</color>
+    <color name="md_theme_dark_onPrimary">#003450</color>
+    <color name="md_theme_dark_primaryContainer">#004B71</color>
+    <color name="md_theme_dark_onPrimaryContainer">#CBE6FF</color>
+    <color name="md_theme_dark_secondary">#B8C8D9</color>
+    <color name="md_theme_dark_onSecondary">#233240</color>
+    <color name="md_theme_dark_secondaryContainer">#3A4857</color>
+    <color name="md_theme_dark_onSecondaryContainer">#D4E4F6</color>
+    <color name="md_theme_dark_background">#1A1C1E</color>
+    <color name="md_theme_dark_onBackground">#E2E2E5</color>
+    <color name="md_theme_dark_surface">#1A1C1E</color>
+    <color name="md_theme_dark_onSurface">#E2E2E5</color>
+</resources>
