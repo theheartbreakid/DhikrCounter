@@ -147,39 +147,37 @@ class HistoryRepository(application: Application) {
     private fun calculateStreak(activeDays: List<Long>): Pair<Int, Int> {
         if (activeDays.isEmpty()) return Pair(0, 0)
         
+        // Sanitize data: must be positive, unique, and sorted descending
+        val sortedDays = activeDays.filter { it > 0 }.distinct().sortedDescending()
+        if (sortedDays.isEmpty()) return Pair(0, 0)
+        
         val today = System.currentTimeMillis() / 86400000
         var currentStreak = 0
         
-        // Current streak
-        if (activeDays[0] == today || activeDays[0] == today - 1) {
+        // Current streak (can be today or starting from yesterday)
+        if (sortedDays[0] == today || sortedDays[0] == today - 1) {
             currentStreak = 1
-            for (i in 0 until activeDays.size - 1) {
-                if (activeDays[i] - activeDays[i+1] == 1L) {
+            for (i in 0 until sortedDays.size - 1) {
+                if (sortedDays[i] - sortedDays[i+1] == 1L) {
                     currentStreak++
                 } else {
                     break
                 }
             }
-            // If the only activity was yesterday, and nothing today, streak is still '1' (or whatever it was)
-            // But if we want to be strict, if activeDays[0] == today - 1, current streak is only valid if we haven't finished today.
         }
 
         // Longest streak
-        var maxStreak = 0
-        var tempStreak = 0
-        if (activeDays.isNotEmpty()) {
-            tempStreak = 1
-            maxStreak = 1
-            for (i in 0 until activeDays.size - 1) {
-                if (activeDays[i] - activeDays[i+1] == 1L) {
-                    tempStreak++
-                } else {
-                    maxStreak = maxOf(maxStreak, tempStreak)
-                    tempStreak = 1
-                }
+        var maxStreak = 1
+        var tempStreak = 1
+        for (i in 0 until sortedDays.size - 1) {
+            if (sortedDays[i] - sortedDays[i+1] == 1L) {
+                tempStreak++
+            } else {
+                maxStreak = maxOf(maxStreak, tempStreak)
+                tempStreak = 1
             }
-            maxStreak = maxOf(maxStreak, tempStreak)
         }
+        maxStreak = maxOf(maxStreak, tempStreak)
         
         return Pair(currentStreak, maxStreak)
     }

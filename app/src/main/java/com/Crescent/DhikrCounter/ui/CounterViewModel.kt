@@ -88,7 +88,12 @@ class CounterViewModel(
         val update = {
             activeSessionId.value?.let { id ->
                 viewModelScope.launch(Dispatchers.IO) {
-                    postValue(historyRepository.getSessionStats(id))
+                    try {
+                        postValue(historyRepository.getSessionStats(id))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        postValue(SessionStats())
+                    }
                 }
             }
         }
@@ -100,7 +105,12 @@ class CounterViewModel(
     val globalStats = MediatorLiveData<GlobalStats>().apply {
         val update = {
             viewModelScope.launch(Dispatchers.IO) {
-                postValue(historyRepository.getGlobalStats())
+                try {
+                    postValue(historyRepository.getGlobalStats())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    postValue(GlobalStats())
+                }
             }
         }
         addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
@@ -111,7 +121,12 @@ class CounterViewModel(
         val update = {
             activeSessionId.value?.let { id ->
                 viewModelScope.launch(Dispatchers.IO) {
-                    postValue(historyRepository.getDailyActivity(id, 7))
+                    try {
+                        postValue(historyRepository.getDailyActivity(id, 7))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        postValue(emptyList())
+                    }
                 }
             }
         }
@@ -123,7 +138,12 @@ class CounterViewModel(
         val update = {
             activeSessionId.value?.let { id ->
                 viewModelScope.launch(Dispatchers.IO) {
-                    postValue(historyRepository.getDailyActivity(id, 30))
+                    try {
+                        postValue(historyRepository.getDailyActivity(id, 30))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        postValue(emptyList())
+                    }
                 }
             }
         }
@@ -134,7 +154,12 @@ class CounterViewModel(
     val sessionComparison = MediatorLiveData<List<Pair<String, Long>>>().apply {
         val update = {
             viewModelScope.launch(Dispatchers.IO) {
-                postValue(historyRepository.getSessionComparison())
+                try {
+                    postValue(historyRepository.getSessionComparison())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    postValue(emptyList())
+                }
             }
         }
         addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }

@@ -17,6 +17,10 @@ class SessionRepository(application: Application) {
     fun getSessionFlow(sessionId: Long): Flow<SessionEntity?> {
         return sessionDao.getSessionFlow(sessionId)
     }
+
+    suspend fun getAllSessions(): List<SessionEntity> {
+        return sessionDao.getAllSessions()
+    }
     
     suspend fun getSession(sessionId: Long): SessionEntity? {
         return sessionDao.getSession(sessionId)

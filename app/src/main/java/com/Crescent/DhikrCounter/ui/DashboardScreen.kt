@@ -224,14 +224,14 @@ fun StatisticsContent(cornerRadius: Float, stats: SessionStats, dailyActivity: L
             // Detailed Stats Grid
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MiniStatCard(Modifier.weight(1f), "Lifetime", String.format(Locale.getDefault(), "%, d", stats.lifetimeCount), Icons.Outlined.AllInclusive, cornerRadius)
-                    MiniStatCard(Modifier.weight(1f), "Today", String.format(Locale.getDefault(), "%, d", stats.todayCount), Icons.Outlined.Today, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Lifetime", String.format(Locale.getDefault(), "%,d", stats.lifetimeCount), Icons.Outlined.AllInclusive, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Today", String.format(Locale.getDefault(), "%,d", stats.todayCount), Icons.Outlined.Today, cornerRadius)
                     MiniStatCard(Modifier.weight(1f), "Goals", stats.goalsCompleted.toString(), Icons.Outlined.Flag, cornerRadius)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MiniStatCard(Modifier.weight(1f), "Weekly", String.format(Locale.getDefault(), "%, d", stats.weeklyCount), Icons.Outlined.DateRange, cornerRadius)
-                    MiniStatCard(Modifier.weight(1f), "Monthly", String.format(Locale.getDefault(), "%, d", stats.monthlyCount), Icons.Outlined.CalendarToday, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Weekly", String.format(Locale.getDefault(), "%,d", stats.weeklyCount), Icons.Outlined.DateRange, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Monthly", String.format(Locale.getDefault(), "%,d", stats.monthlyCount), Icons.Outlined.CalendarToday, cornerRadius)
                     MiniStatCard(Modifier.weight(1f), "Streak", "${stats.currentStreak}d", Icons.Outlined.LocalFireDepartment, cornerRadius)
                 }
             }

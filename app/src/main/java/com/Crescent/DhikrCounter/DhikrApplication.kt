@@ -37,12 +37,36 @@ class DhikrApplication : Application() {
         historyRepository = HistoryRepository(this)
         achievementRepository = AchievementRepository(this)
 
+        // Sanity Check on Startup
+        applicationScope.launch(Dispatchers.IO) {
+            validateAndRecoverData()
+        }
+
         // Check first launch
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val isFirstLaunch = prefs.getBoolean("is_first_launch", true)
         if (isFirstLaunch) {
             createDefaultSession()
             prefs.edit().putBoolean("is_first_launch", false).apply()
+        }
+    }
+
+    private suspend fun validateAndRecoverData() {
+        try {
+            val sessions = sessionRepository.getAllSessions()
+            if (sessions.isEmpty()) {
+                // If somehow database exists but no sessions, create one
+                createDefaultSession()
+            } else {
+                val activeId = settingsManager.activeSessionId
+                if (sessions.none { it.id == activeId }) {
+                    settingsManager.activeSessionId = sessions[0].id
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // If DB is totally corrupted, fallbackToDestructiveMigration in AppDatabase should have cleared it,
+            // resulting in empty sessions list and handled above.
         }
     }
 
