@@ -47,9 +47,13 @@ fun CounterScreen(
     val allSessions by viewModel.allSessions.observeAsState(emptyList())
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var sessionToEdit by remember { mutableStateOf<SessionEntity?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var sessionToDelete by remember { mutableStateOf<SessionEntity?>(null) }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredSessions = allSessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
@@ -129,17 +133,58 @@ fun CounterScreen(
                                 ) 
                             },
                             badge = { 
-                                Surface(
-                                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = RoundedCornerShape(8.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Text(
-                                        session.count.toString(),
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Surface(
+                                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            session.count.toString(),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            sessionToEdit = session
+                                            showEditDialog = true
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            if (allSessions.size > 1) {
+                                                sessionToDelete = session
+                                                showDeleteDialog = true
+                                            } else {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Cannot delete the only remaining session.")
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete",
+                                            modifier = Modifier.size(18.dp),
+                                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                        )
+                                    }
                                 }
                             },
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
@@ -178,6 +223,7 @@ fun CounterScreen(
         }
     ) {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { 
@@ -358,14 +404,46 @@ fun CounterScreen(
         )
     }
 
-    if (showEditDialog && activeSession != null) {
-        EditSessionDialog(
-            session = activeSession!!,
+    if (showEditDialog) {
+        val sessionForEdit = sessionToEdit ?: activeSession
+        if (sessionForEdit != null) {
+            EditSessionDialog(
+                session = sessionForEdit,
+                cornerRadius = cornerRadius,
+                onDismiss = { 
+                    showEditDialog = false
+                    sessionToEdit = null
+                },
+                onConfirm = { updated ->
+                    viewModel.updateSession(updated)
+                    showEditDialog = false
+                    sessionToEdit = null
+                }
+            )
+        }
+    }
+
+    if (showDeleteDialog && sessionToDelete != null) {
+        DeleteSessionDialog(
             cornerRadius = cornerRadius,
-            onDismiss = { showEditDialog = false },
-            onConfirm = { updated ->
-                viewModel.updateSession(updated)
-                showEditDialog = false
+            onDismiss = { 
+                showDeleteDialog = false
+                sessionToDelete = null
+            },
+            onConfirm = {
+                val toDelete = sessionToDelete!!
+                viewModel.deleteSession(toDelete)
+                
+                // After deletion, automatically select a valid remaining session if we deleted the active one
+                if (activeSession?.id == toDelete.id) {
+                    val remaining = allSessions.filter { it.id != toDelete.id }
+                    if (remaining.isNotEmpty()) {
+                        viewModel.setActiveSessionId(remaining[0].id)
+                    }
+                }
+                
+                showDeleteDialog = false
+                sessionToDelete = null
             }
         )
     }
@@ -681,6 +759,34 @@ fun EditSessionDialog(session: SessionEntity, cornerRadius: Float, onDismiss: ()
                 }
             }) {
                 Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
+}
+
+@Composable
+fun DeleteSessionDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Session?", fontWeight = FontWeight.Bold) },
+        text = {
+            Text("Are you sure you want to delete this session?\nThis action cannot be undone.")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text("Delete")
             }
         },
         dismissButton = {
