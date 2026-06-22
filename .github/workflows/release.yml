@@ -3,6 +3,10 @@ on:
   push:
     tags: [ "v*" ] # This triggers the script only when you push a version tag like v1.0.0
 
+# ADD THESE THREE LINES RIGHT HERE:
+permissions:
+  contents: write
+  
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -13,7 +17,7 @@ jobs:
       - name: Set up Java Environment
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'zulu'
 
       - name: Decode Keystore from Secrets
