@@ -394,8 +394,8 @@ class FloatingCounterService : LifecycleService() {
         val sm = settingsManager ?: return
         activeSession?.let { current ->
             lifecycleScope.launch {
-                repo.decrementCount(current.id, current.decrementValue, sm.isNegativeCountAllowed)
-                hr.logEvent(current.id, current.name, "COUNT_CHANGED", -current.decrementValue)
+                repo.decrementCount(current.id, current.incrementValue, sm.isNegativeCountAllowed)
+                hr.logEvent(current.id, current.name, "COUNT_CHANGED", -current.incrementValue)
                 launch(Dispatchers.Main) {
                     soundManager?.playSound(SoundManager.SoundType.DECREMENT)
                 }

@@ -27,6 +27,13 @@ import com.patrykandpatrick.vico.compose.chart.column.columnChart
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 
 import androidx.compose.runtime.livedata.observeAsState
+import com.Crescent.DhikrCounter.data.SessionStats
+import com.Crescent.DhikrCounter.data.GlobalStats
+import java.text.SimpleDateFormat
+import java.util.*
+import com.patrykandpatrick.vico.core.entry.FloatEntry
+import com.patrykandpatrick.vico.core.entry.entryModelOf
+import com.patrykandpatrick.vico.core.entry.entryOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,8 +42,15 @@ fun DashboardScreen(
     onNavigateBack: () -> Unit
 ) {
     val cornerRadius by viewModel.cornerRadius.observeAsState(24f)
+    val sessionStats by viewModel.sessionStats.observeAsState(SessionStats())
+    val globalStats by viewModel.globalStats.observeAsState(GlobalStats())
+    val dailyActivity by viewModel.dailyActivity.observeAsState(emptyList())
+    val dailyActivity30 by viewModel.dailyActivity30.observeAsState(emptyList())
+    val sessionComparison by viewModel.sessionComparison.observeAsState(emptyList())
+    val activeSession by viewModel.activeSession.observeAsState()
+
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Dashboard", "Statistics")
+    val tabs = listOf("Global Dashboard", "Session Statistics")
 
     Scaffold(
         topBar = {
@@ -80,33 +94,33 @@ fun DashboardScreen(
                             Text(
                                 title, 
                                 fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 16.sp
+                                fontSize = 14.sp
                             ) 
                         }
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (selectedTabIndex == 0) {
-                DashboardContent(cornerRadius)
+                DashboardContent(cornerRadius, globalStats, sessionComparison)
             } else {
-                StatisticsContent(cornerRadius)
+                StatisticsContent(cornerRadius, sessionStats, dailyActivity, dailyActivity30, activeSession?.name ?: "Select a Session")
             }
         }
     }
 }
 
 @Composable
-fun DashboardContent(cornerRadius: Float) {
+fun DashboardContent(cornerRadius: Float, globalStats: GlobalStats, sessionComparison: List<Pair<String, Long>>) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            Text("Overview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("Global Overview", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
         }
 
@@ -117,16 +131,16 @@ fun DashboardContent(cornerRadius: Float) {
                     StatCard(
                         modifier = Modifier.weight(1f),
                         title = "Total Counts",
-                        value = "12,450",
+                        value = String.format(Locale.getDefault(), "%, d", globalStats.totalCount),
                         icon = Icons.Outlined.Functions,
                         color = MaterialTheme.colorScheme.primary,
                         cornerRadius = cornerRadius
                     )
                     StatCard(
                         modifier = Modifier.weight(1f),
-                        title = "Today",
-                        value = "1,200",
-                        icon = Icons.Outlined.Today,
+                        title = "Active Sessions",
+                        value = globalStats.activeSessions.toString(),
+                        icon = Icons.Outlined.Layers,
                         color = MaterialTheme.colorScheme.secondary,
                         cornerRadius = cornerRadius
                     )
@@ -135,110 +149,182 @@ fun DashboardContent(cornerRadius: Float) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     StatCard(
                         modifier = Modifier.weight(1f),
-                        title = "This Week",
-                        value = "5,400",
-                        icon = Icons.Outlined.DateRange,
+                        title = "Total Goals",
+                        value = globalStats.totalGoalsCompleted.toString(),
+                        icon = Icons.Outlined.EmojiEvents,
                         color = MaterialTheme.colorScheme.tertiary,
                         cornerRadius = cornerRadius
                     )
                     StatCard(
                         modifier = Modifier.weight(1f),
-                        title = "Active Sessions",
-                        value = "3",
-                        icon = Icons.Outlined.Layers,
-                        color = MaterialTheme.colorScheme.primary,
+                        title = "Global Streak",
+                        value = "${globalStats.currentStreak} Days",
+                        icon = Icons.Outlined.LocalFireDepartment,
+                        color = MaterialTheme.colorScheme.error,
                         cornerRadius = cornerRadius
                     )
                 }
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Streaks & Achievements", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                StreakCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Current Streak",
-                    value = "12 Days",
-                    icon = Icons.Outlined.LocalFireDepartment,
-                    isHot = true,
-                    cornerRadius = cornerRadius
-                )
-                StreakCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Longest Streak",
-                    value = "45 Days",
-                    icon = Icons.Outlined.EmojiEvents,
-                    isHot = false,
-                    cornerRadius = cornerRadius
-                )
+        if (sessionComparison.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Session Comparison", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Surface(
+                    shape = RoundedCornerShape(cornerRadius.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val maxCount = sessionComparison.maxOf { it.second }.toFloat().coerceAtLeast(1f)
+                        sessionComparison.take(5).forEach { (name, count) ->
+                            Column {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                    Text(String.format(Locale.getDefault(), "%, d", count), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { count.toFloat() / maxCount },
+                                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun StatisticsContent(cornerRadius: Float) {
+fun StatisticsContent(cornerRadius: Float, stats: SessionStats, dailyActivity: List<Pair<Long, Long>>, dailyActivity30: List<Pair<Long, Long>>, sessionName: String) {
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    var daysToShow by remember { mutableIntStateOf(7) }
+    val currentActivity = if (daysToShow == 7) dailyActivity else dailyActivity30
+    
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item {
-            Text("Activity This Week", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Surface(
-                shape = RoundedCornerShape(cornerRadius.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(modifier = Modifier.padding(24.dp).fillMaxWidth().height(200.dp)) {
-                    // Dummy chart using Vico
-                    val chartEntryModel = entryModelOf(1200f, 800f, 1500f, 2100f, 900f, 300f, 1800f)
-                    Chart(
-                        chart = columnChart(),
-                        model = chartEntryModel,
-                        startAxis = rememberStartAxis(),
-                        bottomAxis = rememberBottomAxis(),
-                        modifier = Modifier.fillMaxSize()
-                    )
+            Text(sessionName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+            Text("Session Analytics", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        item {
+            // Detailed Stats Grid
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MiniStatCard(Modifier.weight(1f), "Lifetime", String.format(Locale.getDefault(), "%, d", stats.lifetimeCount), Icons.Outlined.AllInclusive, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Today", String.format(Locale.getDefault(), "%, d", stats.todayCount), Icons.Outlined.Today, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Goals", stats.goalsCompleted.toString(), Icons.Outlined.Flag, cornerRadius)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MiniStatCard(Modifier.weight(1f), "Weekly", String.format(Locale.getDefault(), "%, d", stats.weeklyCount), Icons.Outlined.DateRange, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Monthly", String.format(Locale.getDefault(), "%, d", stats.monthlyCount), Icons.Outlined.CalendarToday, cornerRadius)
+                    MiniStatCard(Modifier.weight(1f), "Streak", "${stats.currentStreak}d", Icons.Outlined.LocalFireDepartment, cornerRadius)
+                }
+            }
+        }
+
+        if (currentActivity.isNotEmpty()) {
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Activity (Last $daysToShow Days)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Row {
+                        TextButton(onClick = { daysToShow = 7 }) {
+                            Text("7D", color = if (daysToShow == 7) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        TextButton(onClick = { daysToShow = 30 }) {
+                            Text("30D", color = if (daysToShow == 30) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Surface(
+                    shape = RoundedCornerShape(cornerRadius.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(modifier = Modifier.padding(16.dp).fillMaxWidth().height(180.dp)) {
+                        val entries = currentActivity.mapIndexed { index, pair ->
+                            entryOf(index.toFloat(), pair.second.toFloat())
+                        }
+                        Chart(
+                            chart = columnChart(),
+                            model = entryModelOf(entries),
+                            startAxis = rememberStartAxis(),
+                            bottomAxis = rememberBottomAxis(),
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }
 
         item {
-            Text("Session Breakdown", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-            
             Surface(
                 shape = RoundedCornerShape(cornerRadius.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 2.dp,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text("Morning Routine", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                    LinearProgressIndicator(
-                        progress = { 0.8f },
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Evening Routine", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                    LinearProgressIndicator(
-                        progress = { 0.4f },
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Longest Streak", style = MaterialTheme.typography.bodyMedium)
+                        Text("${stats.longestStreak} Days", fontWeight = FontWeight.Bold)
+                    }
+                    if (stats.lastActivityAt > 0) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Last Activity", style = MaterialTheme.typography.bodyMedium)
+                            Text(dateFormat.format(Date(stats.lastActivityAt)), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    if (stats.createdAt > 0) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Created On", style = MaterialTheme.typography.bodyMedium)
+                            Text(dateFormat.format(Date(stats.createdAt)), fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun MiniStatCard(modifier: Modifier = Modifier, title: String, value: String, icon: ImageVector, cornerRadius: Float) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(cornerRadius.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

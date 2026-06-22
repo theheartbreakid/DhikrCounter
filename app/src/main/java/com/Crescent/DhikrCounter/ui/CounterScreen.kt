@@ -43,6 +43,7 @@ fun CounterScreen(
     val activeSession by viewModel.activeSession.observeAsState()
     val isFloatingEnabled by viewModel.isFloatingEnabled.observeAsState(false)
     val isAnimationEnabled by viewModel.isCountAnimationEnabled.observeAsState(true)
+    val isConfirmResetEnabled by viewModel.isConfirmResetEnabled.observeAsState(true)
     val cornerRadius by viewModel.cornerRadius.observeAsState(24f)
     val allSessions by viewModel.allSessions.observeAsState(emptyList())
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -54,6 +55,7 @@ fun CounterScreen(
     var sessionToEdit by remember { mutableStateOf<SessionEntity?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionEntity?>(null) }
+    var showResetDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredSessions = allSessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
@@ -337,7 +339,15 @@ fun CounterScreen(
 
                             // Inner Box ensures all center content uses the exact same center anchor
                             Box(
-                                modifier = Modifier.size(320.dp),
+                                modifier = Modifier
+                                    .size(320.dp)
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        viewModel.increment()
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 AnimatedCounter(
@@ -381,8 +391,14 @@ fun CounterScreen(
                         // Bottom Section: Controls
                         MainControls(
                             onIncrement = { viewModel.increment() },
-                            onDecrement = { viewModel.decrement(false) },
-                            onReset = { viewModel.reset() },
+                            onDecrement = { viewModel.decrement() },
+                            onReset = { 
+                                if (isConfirmResetEnabled) {
+                                    showResetDialog = true
+                                } else {
+                                    viewModel.reset()
+                                }
+                            },
                             cornerRadius = cornerRadius
                         )
                         
@@ -444,6 +460,17 @@ fun CounterScreen(
                 
                 showDeleteDialog = false
                 sessionToDelete = null
+            }
+        )
+    }
+
+    if (showResetDialog) {
+        ResetConfirmationDialog(
+            cornerRadius = cornerRadius,
+            onDismiss = { showResetDialog = false },
+            onConfirm = {
+                viewModel.reset()
+                showResetDialog = false
             }
         )
     }
@@ -753,12 +780,41 @@ fun EditSessionDialog(session: SessionEntity, cornerRadius: Float, onDismiss: ()
                         name = name,
                         category = category,
                         goalCount = goalStr.toLongOrNull() ?: 0L,
-                        incrementValue = incrementStr.toLongOrNull() ?: 1L
+                        incrementValue = incrementStr.toLongOrNull() ?: 1L,
+                        decrementValue = incrementStr.toLongOrNull() ?: 1L
                     )
                     onConfirm(updated)
                 }
             }) {
                 Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
+}
+
+@Composable
+fun ResetConfirmationDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reset Counter?", fontWeight = FontWeight.Bold) },
+        text = {
+            Text("Are you sure you want to reset this counter to 0?")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text("Reset")
             }
         },
         dismissButton = {

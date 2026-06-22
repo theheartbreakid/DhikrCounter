@@ -11,6 +11,8 @@ import com.Crescent.DhikrCounter.DhikrApplication
 import com.Crescent.DhikrCounter.data.SessionEntity
 import com.Crescent.DhikrCounter.data.SessionRepository
 import com.Crescent.DhikrCounter.data.HistoryRepository
+import com.Crescent.DhikrCounter.data.SessionStats
+import com.Crescent.DhikrCounter.data.GlobalStats
 import com.Crescent.DhikrCounter.data.AchievementRepository
 import com.Crescent.DhikrCounter.utils.SettingsManager
 import com.Crescent.DhikrCounter.utils.SoundManager
@@ -34,12 +36,16 @@ class CounterViewModel(
     val activeSession: LiveData<SessionEntity?>
     val isFloatingEnabled = MutableLiveData<Boolean>()
     val isCountAnimationEnabled = MutableLiveData<Boolean>()
+    val isNegativeCountAllowed = MutableLiveData<Boolean>()
+    val isConfirmResetEnabled = MutableLiveData<Boolean>()
     val cornerRadius = MutableLiveData<Float>()
     
     private val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
         when (key) {
             "pref_floating_enabled" -> isFloatingEnabled.postValue(p.getBoolean("pref_floating_enabled", false))
             "pref_count_animation" -> isCountAnimationEnabled.postValue(p.getBoolean("pref_count_animation", true))
+            "pref_allow_negative" -> isNegativeCountAllowed.postValue(p.getBoolean("pref_allow_negative", false))
+            "pref_confirm_reset" -> isConfirmResetEnabled.postValue(p.getBoolean("pref_confirm_reset", true))
             "pref_corner_radius" -> cornerRadius.postValue(p.getFloat("pref_corner_radius", 24f))
         }
     }
@@ -64,6 +70,8 @@ class CounterViewModel(
         settingsManager.prefs.registerOnSharedPreferenceChangeListener(prefListener)
         isFloatingEnabled.value = settingsManager.isFloatingBubbleEnabled
         isCountAnimationEnabled.value = settingsManager.isCountAnimationEnabled
+        isNegativeCountAllowed.value = settingsManager.isNegativeCountAllowed
+        isConfirmResetEnabled.value = settingsManager.isConfirmBeforeReset
         cornerRadius.value = settingsManager.cornerRadius
         
         if (activeSessionId.value == null) {
@@ -75,6 +83,63 @@ class CounterViewModel(
         }
     }
 
+    val sessionStats = MediatorLiveData<SessionStats>().apply {
+        val update = {
+            activeSessionId.value?.let { id ->
+                viewModelScope.launch(Dispatchers.IO) {
+                    postValue(historyRepository.getSessionStats(id))
+                }
+            }
+        }
+        addSource(activeSessionId) { update() }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+        addSource(activeSession) { update() } // Reacts to renames, goal changes
+    }
+
+    val globalStats = MediatorLiveData<GlobalStats>().apply {
+        val update = {
+            viewModelScope.launch(Dispatchers.IO) {
+                postValue(historyRepository.getGlobalStats())
+            }
+        }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+        addSource(allSessions) { update() } // Reacts to session count changes, renames
+    }
+
+    val dailyActivity = MediatorLiveData<List<Pair<Long, Long>>>().apply {
+        val update = {
+            activeSessionId.value?.let { id ->
+                viewModelScope.launch(Dispatchers.IO) {
+                    postValue(historyRepository.getDailyActivity(id, 7))
+                }
+            }
+        }
+        addSource(activeSessionId) { update() }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+    }
+
+    val dailyActivity30 = MediatorLiveData<List<Pair<Long, Long>>>().apply {
+        val update = {
+            activeSessionId.value?.let { id ->
+                viewModelScope.launch(Dispatchers.IO) {
+                    postValue(historyRepository.getDailyActivity(id, 30))
+                }
+            }
+        }
+        addSource(activeSessionId) { update() }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+    }
+
+    val sessionComparison = MediatorLiveData<List<Pair<String, Long>>>().apply {
+        val update = {
+            viewModelScope.launch(Dispatchers.IO) {
+                postValue(historyRepository.getSessionComparison())
+            }
+        }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+        addSource(allSessions) { update() }
+    }
+
     fun setActiveSessionId(id: Long) {
         settingsManager.activeSessionId = id
         activeSessionId.value = id
@@ -84,11 +149,17 @@ class CounterViewModel(
         activeSession.value?.let { current ->
             viewModelScope.launch(Dispatchers.IO) {
                 repository.incrementCount(current.id, current.incrementValue)
-                historyRepository.logEvent(current.id, current.name, "COUNT_CHANGED", current.incrementValue)
+                historyRepository.logEvent(current.id, current.name, "INCREMENT", current.incrementValue)
+                
+                val isGoalJustReached = current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount
+                if (isGoalJustReached) {
+                    historyRepository.logEvent(current.id, current.name, "GOAL_COMPLETED", 0)
+                }
+                
                 launch(Dispatchers.Main) {
                     if (settingsManager.isHapticFeedbackEnabled) vibrateClick()
                     
-                    if (current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount) {
+                    if (isGoalJustReached) {
                         soundManager.playSound(SoundManager.SoundType.GOAL_REACHED)
                     } else {
                         soundManager.playSound(SoundManager.SoundType.INCREMENT)
@@ -98,11 +169,12 @@ class CounterViewModel(
         }
     }
 
-    fun decrement(allowNegative: Boolean) {
+    fun decrement() {
         activeSession.value?.let { current ->
+            val allowNegative = settingsManager.isNegativeCountAllowed
             viewModelScope.launch(Dispatchers.IO) {
-                repository.decrementCount(current.id, current.decrementValue, allowNegative)
-                historyRepository.logEvent(current.id, current.name, "COUNT_CHANGED", -current.decrementValue)
+                repository.decrementCount(current.id, current.incrementValue, allowNegative)
+                historyRepository.logEvent(current.id, current.name, "DECREMENT", -current.incrementValue)
                 launch(Dispatchers.Main) {
                     if (settingsManager.isHapticFeedbackEnabled) vibrateClickSoft()
                     soundManager.playSound(SoundManager.SoundType.DECREMENT)

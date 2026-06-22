@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SessionDao {
 
+    @Query("SELECT COUNT(*) FROM sessions")
+    fun getSessionsChangeFlow(): Flow<Int>
+
     @Query("SELECT * FROM sessions ORDER BY listOrder ASC")
     fun getAllSessionsFlow(): Flow<List<SessionEntity>>
 
