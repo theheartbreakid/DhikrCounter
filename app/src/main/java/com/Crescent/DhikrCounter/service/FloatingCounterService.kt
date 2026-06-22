@@ -73,6 +73,7 @@ class FloatingCounterService : LifecycleService() {
     private var sessionJob: kotlinx.coroutines.Job? = null
 
     private var isQuickActionsExpanded = false
+    private var isDragging = false
     private val displaySize = Point()
     private var isViewAttached = false
     private var isDismissAttached = false
@@ -214,7 +215,6 @@ class FloatingCounterService : LifecycleService() {
             private var initialY = 0
             private var initialTouchX = 0f
             private var initialTouchY = 0f
-            private var isDragging = false
             private var touchStartTime = 0L
             private val touchSlop = ViewConfiguration.get(this@FloatingCounterService).scaledTouchSlop
 
@@ -250,6 +250,7 @@ class FloatingCounterService : LifecycleService() {
                         if (!isDragging && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
                             isDragging = true
                             handler.removeCallbacks(longPressRunnable!!)
+                            // Seamless transition: Trigger reverse animation instead of instant hide
                             if (isQuickActionsExpanded) toggleQuickActions(false)
                             showDismissZone(true)
                         }
@@ -262,28 +263,21 @@ class FloatingCounterService : LifecycleService() {
                             val centerY = displaySize.y - 120
                             val dist = hypot(event.rawX - centerX, event.rawY - centerY)
                             
-                            // PREMIUM MAGNETIC ATTRACTION LOGIC
                             val farThreshold = 650f
                             val captureThreshold = 180f
                             
                             if (dist < farThreshold) {
-                                // Exponential strength for a true "Gravity Well" feel
                                 val strength = (1.0f - (dist / farThreshold).coerceIn(0.0f, 1.0f)).pow(3.0f)
-                                
-                                // Automatic pull toward center
                                 targetX = (targetX * (1 - strength) + (centerX - v.width / 2) * strength).toInt()
                                 targetY = (targetY * (1 - strength) + (centerY - v.height / 2) * strength).toInt()
                                 
-                                // Dynamic Dismiss Target Growth
                                 val targetScale = 1.1f + strength * 0.9f
                                 dismissIcon?.scaleX = targetScale
                                 dismissIcon?.scaleY = targetScale
                                 dismissZoneView?.alpha = 0.4f + strength * 0.6f
                                 
-                                // Bubble Suction Distortion: Shrink & Compress
                                 val bubbleBaseScale = 1.15f
                                 val shrinkFactor = 1.0f - strength * 0.7f
-                                // Stretch along Y axis (compression toward target)
                                 bubble.scaleX = bubbleBaseScale * shrinkFactor
                                 bubble.scaleY = bubbleBaseScale * shrinkFactor * (1.0f + strength * 0.3f)
                                 bubble.alpha = 1.0f - strength * 0.5f
@@ -320,10 +314,12 @@ class FloatingCounterService : LifecycleService() {
                         return true
                     }
                     MotionEvent.ACTION_UP -> {
+                        val wasDragging = isDragging
+                        isDragging = false
                         handler.removeCallbacks(longPressRunnable!!)
                         bubble.animate().scaleX(1f).scaleY(1f).alpha(1.0f).setDuration(200).start()
                         
-                        if (!isDragging) {
+                        if (!wasDragging) {
                             if (!isLongPressActive) {
                                 if (isQuickActionsExpanded) {
                                     toggleQuickActions(false)
@@ -538,10 +534,8 @@ class FloatingCounterService : LifecycleService() {
         val centerX = displaySize.x / 2
         val centerY = displaySize.y - 120
         
-        // Stop any background pulses
         (icon.getTag(R.id.floating_bubble) as? ValueAnimator)?.cancel()
         
-        // Phase 1 & 2: Rapid Collapse into Center
         val startX = lp.x.toFloat()
         val startY = lp.y.toFloat()
         val targetX = (centerX - view.width / 2).toFloat()
@@ -558,7 +552,6 @@ class FloatingCounterService : LifecycleService() {
                 lp.y = (startY + (targetY - startY) * f).toInt()
                 try { wm.updateViewLayout(view, lp) } catch (e: Exception) {}
                 
-                // Bubble collapses to zero
                 val s = 1.0f - f
                 bubble.scaleX = s
                 bubble.scaleY = s
@@ -566,7 +559,6 @@ class FloatingCounterService : LifecycleService() {
             }
         }
 
-        // Phase 3 & 4: Dismiss Target "Out-In" Ripple & Settle
         val expandAnim = ValueAnimator.ofFloat(icon.scaleX, 2.8f).apply {
             duration = 200
             interpolator = OvershootInterpolator(1.5f)
@@ -607,8 +599,20 @@ class FloatingCounterService : LifecycleService() {
         val bubble = view.findViewById<View>(R.id.floating_bubble)
         val bubbleLp = bubble.layoutParams as FrameLayout.LayoutParams
         
-        val middle = displaySize.x / 2
+        val safeMargin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, COLLAPSED_MARGIN_DP.toFloat(), resources.displayMetrics).toInt()
+        val expandMargin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, EXPANDED_MARGIN_DP.toFloat(), resources.displayMetrics).toInt()
         
+        // Collapse window logic
+        if (!isQuickActionsExpanded && bubbleLp.leftMargin != safeMargin) {
+            val diff = expandMargin - safeMargin
+            lp.x += diff
+            lp.y += diff
+            bubbleLp.setMargins(safeMargin, safeMargin, safeMargin, safeMargin)
+            bubble.layoutParams = bubbleLp
+            try { wm.updateViewLayout(view, lp) } catch (e: Exception) {}
+        }
+
+        val middle = displaySize.x / 2
         val targetX = if (lp.x + view.width / 2 < middle) {
             -bubbleLp.leftMargin
         } else {
@@ -653,7 +657,7 @@ class FloatingCounterService : LifecycleService() {
             val diff = expandMargin - safeMargin
             lp.x -= diff
             lp.y -= diff
-            windowManager?.updateViewLayout(view, lp)
+            try { windowManager?.updateViewLayout(view, lp) } catch (e: Exception) {}
             
             listOf(decrease, reset, openApp).forEach { 
                 it.visibility = View.VISIBLE
@@ -668,21 +672,33 @@ class FloatingCounterService : LifecycleService() {
             openApp.animate().translationX(0f).translationY(offset).scaleX(1f).scaleY(1f).alpha(1f)
                 .setDuration(450).setInterpolator(OvershootInterpolator()).start()
         } else {
+            // REVERSE POP ANIMATION: All action orbs return inward smoothly
             listOf(decrease, reset, openApp).forEach { 
-                it.animate().translationX(0f).translationY(0f).scaleX(0f).scaleY(0f).alpha(0f)
-                    .setDuration(350).setInterpolator(AnticipateInterpolator())
-                    .withEndAction { it.visibility = View.INVISIBLE }.start()
+                it.animate()
+                    .translationX(0f)
+                    .translationY(0f)
+                    .scaleX(0f)
+                    .scaleY(0f)
+                    .alpha(0f)
+                    .setDuration(350)
+                    .setInterpolator(AnticipateInterpolator())
+                    .withEndAction { it.visibility = View.INVISIBLE }
+                    .start()
             }
             
-            bubbleLp.setMargins(safeMargin, safeMargin, safeMargin, safeMargin)
-            bubble.layoutParams = bubbleLp
-            
-            val diff = expandMargin - safeMargin
-            lp.x += diff
-            lp.y += diff
-            windowManager?.updateViewLayout(view, lp)
-            
-            snapToEdge()
+            // Only shrink the window origin immediately if NOT dragging to avoid visual jumping
+            if (!isDragging) {
+                bubbleLp.setMargins(safeMargin, safeMargin, safeMargin, safeMargin)
+                bubble.layoutParams = bubbleLp
+                
+                val diff = expandMargin - safeMargin
+                lp.x += diff
+                lp.y += diff
+                try { windowManager?.updateViewLayout(view, lp) } catch (e: Exception) {}
+                
+                snapToEdge()
+            }
+            // If dragging, snapToEdge() will eventually trigger the collapse when the user releases.
         }
     }
 
