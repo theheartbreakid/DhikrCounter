@@ -9,6 +9,9 @@ interface AchievementDao {
     @Query("SELECT * FROM achievements")
     fun getAllAchievementsFlow(): Flow<List<AchievementEntity>>
 
+    @Query("SELECT * FROM achievements")
+    suspend fun getAllAchievements(): List<AchievementEntity>
+
     @Query("SELECT * FROM achievements WHERE achievementId = :achievementId LIMIT 1")
     suspend fun getAchievement(achievementId: String): AchievementEntity?
 
@@ -17,4 +20,7 @@ interface AchievementDao {
 
     @Update
     suspend fun update(achievement: AchievementEntity)
+
+    @Query("DELETE FROM achievements")
+    suspend fun clearAllAchievements()
 }

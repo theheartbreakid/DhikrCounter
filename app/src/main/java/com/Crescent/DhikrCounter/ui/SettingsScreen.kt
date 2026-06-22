@@ -14,7 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.Crescent.DhikrCounter.DhikrApplication
+import com.Crescent.DhikrCounter.utils.BackupManagerUtil
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +31,27 @@ fun SettingsScreen(
     val context = LocalContext.current
     val settingsManager = (context.applicationContext as DhikrApplication).settingsManager
     val prefs = settingsManager.prefs
+
+    val scope = rememberCoroutineScope()
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var restoreUri by remember { mutableStateOf<Uri?>(null) }
+    var snackbarMessage by remember { mutableStateOf("") }
+
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val success = BackupManagerUtil.exportBackup(context, uri)
+                snackbarMessage = if (success) "Backup exported successfully" else "Failed to export backup"
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            restoreUri = uri
+            showRestoreDialog = true
+        }
+    }
 
     // General
     var themeMode by remember { mutableStateOf(settingsManager.themeMode) }
@@ -61,7 +89,17 @@ fun SettingsScreen(
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(snackbarMessage) {
+        if (snackbarMessage.isNotEmpty()) {
+            snackbarHostState.showSnackbar(snackbarMessage)
+            snackbarMessage = ""
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Settings", fontWeight = FontWeight.Bold) },
@@ -256,20 +294,73 @@ fun SettingsScreen(
 
             item { SettingsHeader("Data & Backup") }
             item {
-                ListItem(
-                    headlineContent = { Text("Backup Data") },
-                    supportingContent = { Text("Save your sessions and history") },
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
+                Surface(
+                    onClick = {
+                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                        exportLauncher.launch("DhikrCounter_Backup_$timestamp.json")
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Backup Data") },
+                        supportingContent = { Text("Save your sessions and history") }
+                    )
+                }
             }
             item {
-                ListItem(
-                    headlineContent = { Text("Restore Data") },
-                    supportingContent = { Text("Restore from a previous backup") },
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
+                Surface(
+                    onClick = {
+                        importLauncher.launch(arrayOf("application/json"))
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Restore Data") },
+                        supportingContent = { Text("Restore from a previous backup") }
+                    )
+                }
             }
         }
+    }
+
+    if (showRestoreDialog && restoreUri != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showRestoreDialog = false 
+                restoreUri = null 
+            },
+            title = { Text("Restore Backup", fontWeight = FontWeight.Bold) },
+            text = { Text("How would you like to restore this backup?\n\nMerge: Keeps your existing data and adds the backup data.\n\nReplace: Deletes all your current data and replaces it with the backup.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val uri = restoreUri!!
+                    showRestoreDialog = false
+                    restoreUri = null
+                    scope.launch {
+                        val success = BackupManagerUtil.restoreBackup(context, uri, isReplace = true)
+                        snackbarMessage = if (success) "Backup replaced successfully" else "Failed to restore backup"
+                    }
+                }) {
+                    Text("Replace")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    val uri = restoreUri!!
+                    showRestoreDialog = false
+                    restoreUri = null
+                    scope.launch {
+                        val success = BackupManagerUtil.restoreBackup(context, uri, isReplace = false)
+                        snackbarMessage = if (success) "Backup merged successfully" else "Failed to restore backup"
+                    }
+                }) {
+                    Text("Merge")
+                }
+            },
+            shape = RoundedCornerShape(cornerRadius.dp)
+        )
     }
 
     if (showThemeDialog) {

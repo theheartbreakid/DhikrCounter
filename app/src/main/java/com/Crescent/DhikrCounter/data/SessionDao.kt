@@ -11,7 +11,10 @@ interface SessionDao {
 
     @Query("SELECT * FROM sessions WHERE id = :sessionId LIMIT 1")
     fun getSessionFlow(sessionId: Long): Flow<SessionEntity?>
-    
+
+    @Query("SELECT * FROM sessions ORDER BY listOrder ASC")
+    suspend fun getAllSessions(): List<SessionEntity>
+        
     @Query("SELECT * FROM sessions WHERE id = :sessionId LIMIT 1")
     suspend fun getSession(sessionId: Long): SessionEntity?
 
@@ -35,4 +38,7 @@ interface SessionDao {
 
     @Delete
     suspend fun delete(session: SessionEntity)
+
+    @Query("DELETE FROM sessions")
+    suspend fun clearAllSessions()
 }
