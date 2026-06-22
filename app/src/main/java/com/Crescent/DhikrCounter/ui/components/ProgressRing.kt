@@ -29,18 +29,30 @@ fun ProgressRing(
     )
 
     Canvas(modifier = modifier) {
+        val strokeWidthPx = strokeWidth
+        val diameter = size.minDimension
+        val radius = (diameter - strokeWidthPx) / 2
+
         // Track
         drawCircle(
             color = trackColor,
-            style = Stroke(width = strokeWidth)
+            radius = radius,
+            center = center,
+            style = Stroke(width = strokeWidthPx)
         )
         // Progress
+        val arcSize = radius * 2
         drawArc(
             color = color,
             startAngle = -90f,
             sweepAngle = animatedProgress * 360f,
             useCenter = false,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            topLeft = androidx.compose.ui.geometry.Offset(
+                center.x - radius,
+                center.y - radius
+            ),
+            size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
+            style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
         )
     }
 }

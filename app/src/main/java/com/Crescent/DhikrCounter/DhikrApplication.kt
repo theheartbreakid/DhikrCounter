@@ -7,6 +7,7 @@ import com.Crescent.DhikrCounter.data.SessionRepository
 import com.Crescent.DhikrCounter.data.HistoryRepository
 import com.Crescent.DhikrCounter.data.AchievementRepository
 import com.Crescent.DhikrCounter.utils.SettingsManager
+import com.Crescent.DhikrCounter.utils.SoundManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +23,8 @@ class DhikrApplication : Application() {
         private set
     lateinit var settingsManager: SettingsManager
         private set
+    lateinit var soundManager: SoundManager
+        private set
         
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -29,6 +32,7 @@ class DhikrApplication : Application() {
         super.onCreate()
 
         settingsManager = SettingsManager(this)
+        soundManager = SoundManager(this, settingsManager)
         sessionRepository = SessionRepository(this)
         historyRepository = HistoryRepository(this)
         achievementRepository = AchievementRepository(this)

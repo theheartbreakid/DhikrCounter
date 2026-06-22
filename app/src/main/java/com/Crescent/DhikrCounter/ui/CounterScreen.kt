@@ -194,22 +194,40 @@ fun CounterScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
-                                val intent = android.content.Intent(
-                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                    android.net.Uri.parse("package:${context.packageName}")
+                        Surface(
+                            onClick = {
+                                if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
+                                    val intent = android.content.Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        android.net.Uri.parse("package:${context.packageName}")
+                                    )
+                                    context.startActivity(intent)
+                                } else {
+                                    viewModel.toggleFloatingCounter()
+                                }
+                            },
+                            color = if (isFloatingEnabled) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                                 )
-                                context.startActivity(intent)
-                            } else {
-                                viewModel.toggleFloatingCounter()
+                                Text(
+                                    "Floating",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isFloatingEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground
+                                )
                             }
-                        }) {
-                            Icon(
-                                if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
-                                contentDescription = "Toggle Floating Counter",
-                                tint = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                            )
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -251,10 +269,12 @@ fun CounterScreen(
                             onEditClick = { showEditDialog = true }
                         )
 
+                        Spacer(modifier = Modifier.weight(0.1f))
+
                         // Center Section: Counter & Ring
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(1.2f)
                                 .fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
@@ -269,7 +289,11 @@ fun CounterScreen(
                                 strokeWidth = 32f
                             )
 
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Inner Box ensures all center content uses the exact same center anchor
+                            Box(
+                                modifier = Modifier.size(320.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 AnimatedCounter(
                                     count = session.count,
                                     enabled = isAnimationEnabled,
@@ -281,12 +305,12 @@ fun CounterScreen(
                                 )
                                 
                                 if (session.goalCount > 0) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    val remaining = maxOf(0, session.goalCount - session.count)
                                     Surface(
+                                        modifier = Modifier.offset(y = 72.dp),
                                         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
                                         shape = RoundedCornerShape(cornerRadius.dp / 1.5f)
                                     ) {
-                                        val remaining = maxOf(0, session.goalCount - session.count)
                                         Text(
                                             text = "$remaining remaining",
                                             style = MaterialTheme.typography.labelLarge,
@@ -302,30 +326,21 @@ fun CounterScreen(
                         // Below Counter: Progress Bar & Stats
                         if (activeSession!!.goalCount > 0) {
                             SessionProgressDetails(activeSession!!, cornerRadius)
+                        } else {
+                            Spacer(modifier = Modifier.height(32.dp))
                         }
+
+                        Spacer(modifier = Modifier.weight(0.1f))
 
                         // Bottom Section: Controls
                         MainControls(
                             onIncrement = { viewModel.increment() },
                             onDecrement = { viewModel.decrement(false) },
                             onReset = { viewModel.reset() },
-                            onEdit = { showEditDialog = true },
-                            isFloatingEnabled = isFloatingEnabled,
-                            cornerRadius = cornerRadius,
-                            onToggleFloating = {
-                                if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
-                                    val intent = android.content.Intent(
-                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                        android.net.Uri.parse("package:${context.packageName}")
-                                    )
-                                    context.startActivity(intent)
-                                } else {
-                                    viewModel.toggleFloatingCounter()
-                                }
-                            }
+                            cornerRadius = cornerRadius
                         )
                         
-                        Spacer(modifier = Modifier.height(48.dp))
+                        Spacer(modifier = Modifier.height(64.dp))
                     }
                 }
             }
@@ -499,64 +514,46 @@ fun MainControls(
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
     onReset: () -> Unit,
-    onEdit: () -> Unit,
-    isFloatingEnabled: Boolean,
-    cornerRadius: Float,
-    onToggleFloating: () -> Unit
+    cornerRadius: Float
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .padding(horizontal = 32.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Reset Button
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             FilledTonalIconButton(
                 onClick = onReset,
-                modifier = Modifier.size(56.dp),
+                modifier = Modifier.size(64.dp),
                 shape = CircleShape,
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 )
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(24.dp))
+                Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(28.dp))
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Reset", style = MaterialTheme.typography.labelSmall)
-        }
-
-        // Floating Counter Toggle
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            FilledTonalIconButton(
-                onClick = onToggleFloating,
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = if (isFloatingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            ) {
-                Icon(
-                    if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
-                    contentDescription = "Floating Counter",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Floating", style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "RESET", 
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                letterSpacing = 1.sp
+            )
         }
 
         // Massive Increment Button
         Button(
             onClick = onIncrement,
             modifier = Modifier
-                .size(120.dp),
+                .size(140.dp),
             shape = RoundedCornerShape(cornerRadius.dp * 1.5f),
             elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 8.dp,
+                defaultElevation = 10.dp,
                 pressedElevation = 2.dp
             ),
             contentPadding = PaddingValues(0.dp)
@@ -564,7 +561,7 @@ fun MainControls(
             Icon(
                 Icons.Default.Add, 
                 contentDescription = "Increment", 
-                modifier = Modifier.size(64.dp)
+                modifier = Modifier.size(80.dp)
             )
         }
 
@@ -572,26 +569,23 @@ fun MainControls(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             FilledTonalIconButton(
                 onClick = onDecrement,
-                modifier = Modifier.size(56.dp),
-                shape = RoundedCornerShape(cornerRadius.dp / 1.5f)
+                modifier = Modifier.size(64.dp),
+                shape = RoundedCornerShape(cornerRadius.dp / 1.5f),
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
             ) {
-                Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(28.dp))
+                Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(32.dp))
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Minus", style = MaterialTheme.typography.labelSmall)
-        }
-
-        // Edit/Settings Button
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            FilledTonalIconButton(
-                onClick = onEdit,
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape
-            ) {
-                Icon(Icons.Outlined.Tune, contentDescription = "Settings", modifier = Modifier.size(24.dp))
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Edit", style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "MINUS", 
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 1.sp
+            )
         }
     }
 }

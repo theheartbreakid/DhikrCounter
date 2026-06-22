@@ -2,8 +2,6 @@ package com.Crescent.DhikrCounter.ui
 
 import android.app.Application
 import android.content.Context
-import android.media.AudioManager
-import android.media.ToneGenerator
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -15,6 +13,7 @@ import com.Crescent.DhikrCounter.data.SessionRepository
 import com.Crescent.DhikrCounter.data.HistoryRepository
 import com.Crescent.DhikrCounter.data.AchievementRepository
 import com.Crescent.DhikrCounter.utils.SettingsManager
+import com.Crescent.DhikrCounter.utils.SoundManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -27,8 +26,8 @@ class CounterViewModel(
     private val historyRepository: HistoryRepository
     private val achievementRepository: AchievementRepository
     private val settingsManager: SettingsManager
+    private val soundManager: SoundManager
     private val vibrator: Vibrator?
-    private val toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
 
     val allSessions: LiveData<List<SessionEntity>>
     private val activeSessionId = savedStateHandle.getLiveData<Long>("active_session_id")
@@ -51,6 +50,7 @@ class CounterViewModel(
         historyRepository = app.historyRepository
         achievementRepository = app.achievementRepository
         settingsManager = app.settingsManager
+        soundManager = app.soundManager
         
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = application.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -87,7 +87,12 @@ class CounterViewModel(
                 historyRepository.logEvent(current.id, current.name, "COUNT_CHANGED", current.incrementValue)
                 launch(Dispatchers.Main) {
                     if (settingsManager.isHapticFeedbackEnabled) vibrateClick()
-                    if (settingsManager.isSoundFeedbackEnabled) playSound()
+                    
+                    if (current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount) {
+                        soundManager.playSound(SoundManager.SoundType.GOAL_REACHED)
+                    } else {
+                        soundManager.playSound(SoundManager.SoundType.INCREMENT)
+                    }
                 }
             }
         }
@@ -100,14 +105,10 @@ class CounterViewModel(
                 historyRepository.logEvent(current.id, current.name, "COUNT_CHANGED", -current.decrementValue)
                 launch(Dispatchers.Main) {
                     if (settingsManager.isHapticFeedbackEnabled) vibrateClickSoft()
-                    if (settingsManager.isSoundFeedbackEnabled) playSound()
+                    soundManager.playSound(SoundManager.SoundType.DECREMENT)
                 }
             }
         }
-    }
-
-    private fun playSound() {
-        toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 50)
     }
 
     private fun vibrateClick() {
@@ -133,6 +134,9 @@ class CounterViewModel(
             viewModelScope.launch(Dispatchers.IO) {
                 repository.resetCount(current.id)
                 historyRepository.logEvent(current.id, current.name, "RESET", -current.count)
+                launch(Dispatchers.Main) {
+                    soundManager.playSound(SoundManager.SoundType.RESET)
+                }
             }
         }
     }
@@ -177,6 +181,5 @@ class CounterViewModel(
     override fun onCleared() {
         super.onCleared()
         settingsManager.prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
-        toneGenerator.release()
     }
 }

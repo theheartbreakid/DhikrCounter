@@ -26,6 +26,8 @@ import com.Crescent.DhikrCounter.data.SessionRepository
 import com.Crescent.DhikrCounter.data.HistoryRepository
 import com.Crescent.DhikrCounter.utils.GlassUtils
 import com.Crescent.DhikrCounter.utils.SettingsManager
+import com.Crescent.DhikrCounter.utils.SoundManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -46,6 +48,7 @@ class FloatingCounterService : LifecycleService() {
     private var repository: SessionRepository? = null
     private var historyRepository: HistoryRepository? = null
     private var settingsManager: SettingsManager? = null
+    private var soundManager: SoundManager? = null
     private var activeSession: SessionEntity? = null
     private var sessionJob: kotlinx.coroutines.Job? = null
 
@@ -85,7 +88,10 @@ class FloatingCounterService : LifecycleService() {
             repository = app.sessionRepository
             historyRepository = app.historyRepository
             settingsManager = app.settingsManager
+            soundManager = app.soundManager
             settingsManager?.prefs?.registerOnSharedPreferenceChangeListener(prefListener)
+            
+            soundManager?.playSound(SoundManager.SoundType.FLOATING_POPUP)
 
             val wm = getSystemService(WINDOW_SERVICE) as WindowManager
             windowManager = wm
@@ -371,6 +377,13 @@ class FloatingCounterService : LifecycleService() {
             lifecycleScope.launch {
                 repo.incrementCount(current.id, current.incrementValue)
                 hr.logEvent(current.id, current.name, "COUNT_CHANGED", current.incrementValue)
+                launch(Dispatchers.Main) {
+                    if (current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount) {
+                        soundManager?.playSound(SoundManager.SoundType.GOAL_REACHED)
+                    } else {
+                        soundManager?.playSound(SoundManager.SoundType.INCREMENT)
+                    }
+                }
             }
         }
     }
@@ -383,6 +396,9 @@ class FloatingCounterService : LifecycleService() {
             lifecycleScope.launch {
                 repo.decrementCount(current.id, current.decrementValue, sm.isNegativeCountAllowed)
                 hr.logEvent(current.id, current.name, "COUNT_CHANGED", -current.decrementValue)
+                launch(Dispatchers.Main) {
+                    soundManager?.playSound(SoundManager.SoundType.DECREMENT)
+                }
             }
         }
     }
@@ -394,12 +410,16 @@ class FloatingCounterService : LifecycleService() {
             lifecycleScope.launch {
                 repo.resetCount(current.id)
                 hr.logEvent(current.id, current.name, "RESET", -current.count)
+                launch(Dispatchers.Main) {
+                    soundManager?.playSound(SoundManager.SoundType.RESET)
+                }
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        soundManager?.playSound(SoundManager.SoundType.FLOATING_DISMISS)
         settingsManager?.prefs?.unregisterOnSharedPreferenceChangeListener(prefListener)
         
         val wm = windowManager
