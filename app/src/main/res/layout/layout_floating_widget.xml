@@ -2,17 +2,22 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <!-- The actual floating bubble -->
-    <androidx.cardview.widget.CardView
+    <!-- The actual floating bubble (Center) -->
+    <!-- Margins are handled dynamically in FloatingCounterService to ensure zero-clipping -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/floating_bubble"
         android:layout_width="64dp"
         android:layout_height="64dp"
+        android:layout_gravity="center"
         app:cardCornerRadius="32dp"
-        app:cardElevation="12dp"
-        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
-        android:layout_margin="8dp">
+        app:cardElevation="10dp"
+        app:strokeWidth="2.2dp"
+        app:strokeColor="#FFFFFF"
+        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer">
 
         <TextView
             android:id="@+id/text_floating_count"
@@ -20,50 +25,85 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="0"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="@color/md_theme_dark_onPrimaryContainer" />
 
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
-    <!-- Expanded quick actions (Hidden by default) -->
-    <LinearLayout
-        android:id="@+id/layout_quick_actions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginTop="80dp"
-        android:visibility="gone"
-        android:background="@drawable/rounded_glass_bg"
-        android:padding="8dp">
-
+    <!-- Orbiting Action: Minus (Top Left) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_floating_decrease_card"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:alpha="0"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="1.2dp"
+        app:strokeColor="#40FFFFFF"
+        app:cardBackgroundColor="#CC1A1C1E">
         <ImageButton
             android:id="@+id/btn_floating_decrease"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_input_delete"
             android:contentDescription="Decrease"
-            android:tint="@android:color/white" />
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            app:tint="@android:color/white" />
+    </com.google.android.material.card.MaterialCardView>
 
+    <!-- Orbiting Action: Reset (Top Right) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_floating_reset_card"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:alpha="0"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="1.2dp"
+        app:strokeColor="#40FFFFFF"
+        app:cardBackgroundColor="#CC1A1C1E">
         <ImageButton
             android:id="@+id/btn_floating_reset"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
             android:contentDescription="Reset"
-            android:tint="@android:color/white" />
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            app:tint="@android:color/white" />
+    </com.google.android.material.card.MaterialCardView>
 
+    <!-- Orbiting Action: Open App (Bottom Center) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_floating_open_app_card"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:alpha="0"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        app:strokeWidth="1.2dp"
+        app:strokeColor="#40FFFFFF"
+        app:cardBackgroundColor="#CC1A1C1E">
         <ImageButton
             android:id="@+id/btn_floating_open_app"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_view"
             android:contentDescription="Open App"
-            android:tint="@android:color/white" />
-    </LinearLayout>
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            app:tint="@android:color/white" />
+    </com.google.android.material.card.MaterialCardView>
 
 </FrameLayout>
