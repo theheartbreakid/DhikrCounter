@@ -55,7 +55,7 @@ fun CounterScreen(
     var sessionToEdit by remember { mutableStateOf<SessionEntity?>(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<SessionEntity?>(null) }
-    var showResetDialog by remember { mutableStateOf(false) }
+    val showResetDialog by viewModel.showResetConfirmation.observeAsState(false)
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredSessions = allSessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
@@ -241,43 +241,6 @@ fun CounterScreen(
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
                         }
                     },
-                    actions = {
-                        Surface(
-                            onClick = {
-                                if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
-                                    val intent = android.content.Intent(
-                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                        android.net.Uri.parse("package:${context.packageName}")
-                                    )
-                                    context.startActivity(intent)
-                                } else {
-                                    viewModel.toggleFloatingCounter()
-                                }
-                            },
-                            color = if (isFloatingEnabled) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                            shape = RoundedCornerShape(20.dp),
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                                )
-                                Text(
-                                    "Floating",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isFloatingEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color.Transparent,
                         titleContentColor = MaterialTheme.colorScheme.onBackground,
@@ -377,6 +340,45 @@ fun CounterScreen(
                                     }
                                 }
                             }
+
+                            // Floating Toggle Button - Relocated for better accessibility
+                            Surface(
+                                onClick = {
+                                    if (!isFloatingEnabled && !Settings.canDrawOverlays(context)) {
+                                        val intent = android.content.Intent(
+                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                            android.net.Uri.parse("package:${context.packageName}")
+                                        )
+                                        context.startActivity(intent)
+                                    } else {
+                                        viewModel.toggleFloatingCounter()
+                                    }
+                                },
+                                color = if (isFloatingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(end = 24.dp, bottom = 0.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        if (isFloatingEnabled) Icons.Default.FilterCenterFocus else Icons.Outlined.FilterCenterFocus,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = if (isFloatingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        "Floating",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isFloatingEnabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
 
                         // Below Counter: Progress Bar & Stats
@@ -394,7 +396,7 @@ fun CounterScreen(
                             onDecrement = { viewModel.decrement() },
                             onReset = { 
                                 if (isConfirmResetEnabled) {
-                                    showResetDialog = true
+                                    viewModel.showResetConfirmation.value = true
                                 } else {
                                     viewModel.reset()
                                 }
@@ -467,10 +469,10 @@ fun CounterScreen(
     if (showResetDialog) {
         ResetConfirmationDialog(
             cornerRadius = cornerRadius,
-            onDismiss = { showResetDialog = false },
+            onDismiss = { viewModel.showResetConfirmation.value = false },
             onConfirm = {
                 viewModel.reset()
-                showResetDialog = false
+                viewModel.showResetConfirmation.value = false
             }
         )
     }

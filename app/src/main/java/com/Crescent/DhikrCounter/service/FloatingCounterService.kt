@@ -230,7 +230,7 @@ class FloatingCounterService : LifecycleService() {
                         isLongPressActive = false
                         touchStartTime = System.currentTimeMillis()
                         
-                        bubble.animate().scaleX(1.15f).scaleY(1.15f).setDuration(200).start()
+                        bubble.animate().scaleX(1.15f).scaleY(1.15f).alpha(1.0f).setDuration(200).start()
                         
                         longPressRunnable = Runnable {
                             if (!isDragging) {
@@ -313,27 +313,35 @@ class FloatingCounterService : LifecycleService() {
                         }
                         return true
                     }
-                    MotionEvent.ACTION_UP -> {
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         val wasDragging = isDragging
                         isDragging = false
                         handler.removeCallbacks(longPressRunnable!!)
-                        bubble.animate().scaleX(1f).scaleY(1f).alpha(1.0f).setDuration(200).start()
                         
-                        if (!wasDragging) {
-                            if (!isLongPressActive) {
-                                if (isQuickActionsExpanded) {
-                                    toggleQuickActions(false)
+                        resetBubbleAppearance()
+                        
+                        if (event.action == MotionEvent.ACTION_UP) {
+                            if (!wasDragging) {
+                                if (!isLongPressActive) {
+                                    if (isQuickActionsExpanded) {
+                                        toggleQuickActions(false)
+                                    } else {
+                                        incrementCount()
+                                    }
+                                }
+                            } else {
+                                showDismissZone(false)
+                                if (isInDismissZone(event.rawX, event.rawY)) {
+                                    animateMagneticConsumption()
                                 } else {
-                                    incrementCount()
+                                    snapToEdge()
                                 }
                             }
                         } else {
-                            showDismissZone(false)
-                            if (isInDismissZone(event.rawX, event.rawY)) {
-                                animateMagneticConsumption()
-                            } else {
-                                snapToEdge()
-                            }
+                            // ACTION_CANCEL
+                            if (wasDragging) showDismissZone(false)
+                            if (isQuickActionsExpanded) toggleQuickActions(false)
+                            snapToEdge()
                         }
                         return true
                     }
@@ -352,13 +360,32 @@ class FloatingCounterService : LifecycleService() {
         }
     }
 
+    private fun resetBubbleAppearance() {
+        val view = floatingView ?: return
+        val bubble = view.findViewById<MaterialCardView>(R.id.floating_bubble) ?: return
+        val baseOpacity = settingsManager?.bubbleOpacity?.coerceAtLeast(0.3f) ?: 1.0f
+        
+        bubble.animate().cancel()
+        bubble.animate()
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .alpha(baseOpacity)
+            .setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .start()
+    }
+
     private fun updateFloatingViewSize() {
         val view = floatingView ?: return
         val sm = settingsManager ?: return
         val bubble = view.findViewById<MaterialCardView>(R.id.floating_bubble)
+        val textCount = view.findViewById<TextView>(R.id.text_floating_count)
         
         val sizeVal = sm.bubbleSize.let { if (it < 40) 64 else it }
         val bubbleSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, sizeVal.toFloat(), resources.displayMetrics).toInt()
+        
+        // Scale factor relative to default size (64dp)
+        val scaleFactor = sizeVal.toFloat() / 64f
         
         val bubbleParams = bubble.layoutParams as FrameLayout.LayoutParams
         bubbleParams.width = bubbleSizePx
@@ -372,9 +399,14 @@ class FloatingCounterService : LifecycleService() {
         bubble.layoutParams = bubbleParams
         bubble.radius = bubbleSizePx / 2f
         bubble.alpha = sm.bubbleOpacity.coerceAtLeast(0.3f)
+        
+        // Scale border and text size proportionally
+        bubble.strokeWidth = (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2.2f, resources.displayMetrics) * scaleFactor).toInt()
+        textCount.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scaleFactor)
 
         val orbitSize = (bubbleSizePx * 0.35f).toInt()
         val orbitIconPadding = (orbitSize * 0.18f).toInt()
+        val orbitStrokeWidth = (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1.2f, resources.displayMetrics) * scaleFactor).toInt()
         
         val orbitCards = arrayOf(R.id.btn_floating_decrease_card, R.id.btn_floating_reset_card, R.id.btn_floating_open_app_card)
         orbitCards.forEach { id ->
@@ -384,6 +416,7 @@ class FloatingCounterService : LifecycleService() {
             lp.height = orbitSize
             card.layoutParams = lp
             card.radius = orbitSize / 2f
+            card.strokeWidth = orbitStrokeWidth
             
             val btn = card.findViewById<ImageButton>(R.id.btn_floating_decrease) 
                 ?: card.findViewById<ImageButton>(R.id.btn_floating_reset)
@@ -612,11 +645,12 @@ class FloatingCounterService : LifecycleService() {
             try { wm.updateViewLayout(view, lp) } catch (e: Exception) {}
         }
 
+        val currentViewWidth = bubble.width + bubbleLp.leftMargin + bubbleLp.rightMargin
         val middle = displaySize.x / 2
-        val targetX = if (lp.x + view.width / 2 < middle) {
+        val targetX = if (lp.x + currentViewWidth / 2 < middle) {
             -bubbleLp.leftMargin
         } else {
-            displaySize.x - (view.width - bubbleLp.rightMargin)
+            displaySize.x - (currentViewWidth - bubbleLp.rightMargin)
         }
         
         val startX = lp.x
@@ -644,7 +678,7 @@ class FloatingCounterService : LifecycleService() {
         val openApp = view.findViewById<View>(R.id.btn_floating_open_app_card)
         
         val bubbleSize = bubble.width
-        val offset = bubbleSize * 0.72f
+        val offset = bubbleSize * 0.58f
         val diag = offset * 0.707f
         
         val safeMargin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, COLLAPSED_MARGIN_DP.toFloat(), resources.displayMetrics).toInt()
@@ -766,6 +800,17 @@ class FloatingCounterService : LifecycleService() {
     }
 
     private fun resetCount() {
+        val sm = settingsManager ?: return
+        
+        if (sm.isConfirmBeforeReset) {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            intent.putExtra("show_reset_dialog", true)
+            startActivity(intent)
+            if (isQuickActionsExpanded) toggleQuickActions(false)
+            return
+        }
+
         val repo = repository ?: return
         val hr = historyRepository ?: return
         activeSession?.let { current ->

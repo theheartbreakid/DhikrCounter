@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -24,11 +25,17 @@ class MainActivity : ComponentActivity() {
     private lateinit var settingsManager: com.Crescent.DhikrCounter.utils.SettingsManager
     private var prefListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
+    private val viewModel: com.Crescent.DhikrCounter.ui.CounterViewModel by lazy {
+        ViewModelProvider(this)[com.Crescent.DhikrCounter.ui.CounterViewModel::class.java]
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         val app = application as DhikrApplication
         settingsManager = app.settingsManager
+        
+        handleIntent(intent)
         
         if (settingsManager.isKeepScreenAwake) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -117,6 +124,18 @@ class MainActivity : ComponentActivity() {
         } else {
             val intent = Intent(this, FloatingCounterService::class.java)
             stopService(intent)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra("show_reset_dialog", false) == true) {
+            viewModel.showResetConfirmation.value = true
         }
     }
 

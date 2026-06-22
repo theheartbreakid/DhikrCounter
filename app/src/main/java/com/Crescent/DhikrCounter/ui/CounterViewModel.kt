@@ -38,6 +38,7 @@ class CounterViewModel(
     val isCountAnimationEnabled = MutableLiveData<Boolean>()
     val isNegativeCountAllowed = MutableLiveData<Boolean>()
     val isConfirmResetEnabled = MutableLiveData<Boolean>()
+    val showResetConfirmation = MutableLiveData<Boolean>().apply { value = false }
     val cornerRadius = MutableLiveData<Float>()
     
     private val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->

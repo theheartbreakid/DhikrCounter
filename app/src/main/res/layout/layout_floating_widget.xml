@@ -14,7 +14,7 @@
         android:layout_height="64dp"
         android:layout_gravity="center"
         app:cardCornerRadius="32dp"
-        app:cardElevation="10dp"
+        app:cardElevation="8dp"
         app:strokeWidth="2.2dp"
         app:strokeColor="#FFFFFF"
         app:cardBackgroundColor="@color/md_theme_dark_primaryContainer">
@@ -40,7 +40,7 @@
         android:visibility="invisible"
         android:alpha="0"
         app:cardCornerRadius="16dp"
-        app:cardElevation="6dp"
+        app:cardElevation="14dp"
         app:strokeWidth="1.2dp"
         app:strokeColor="#40FFFFFF"
         app:cardBackgroundColor="#CC1A1C1E">
@@ -65,7 +65,7 @@
         android:visibility="invisible"
         android:alpha="0"
         app:cardCornerRadius="16dp"
-        app:cardElevation="6dp"
+        app:cardElevation="14dp"
         app:strokeWidth="1.2dp"
         app:strokeColor="#40FFFFFF"
         app:cardBackgroundColor="#CC1A1C1E">
@@ -90,7 +90,7 @@
         android:visibility="invisible"
         android:alpha="0"
         app:cardCornerRadius="16dp"
-        app:cardElevation="6dp"
+        app:cardElevation="14dp"
         app:strokeWidth="1.2dp"
         app:strokeColor="#40FFFFFF"
         app:cardBackgroundColor="#CC1A1C1E">
