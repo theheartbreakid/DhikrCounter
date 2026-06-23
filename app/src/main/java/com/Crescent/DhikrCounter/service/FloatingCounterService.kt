@@ -564,6 +564,8 @@ class FloatingCounterService : LifecycleService() {
         val wm = windowManager ?: return
         val icon = dismissIcon ?: return
         
+        soundManager?.playSound(SoundManager.SoundType.FLOATING_DISMISS)
+
         val centerX = displaySize.x / 2
         val centerY = displaySize.y - 120
         
@@ -826,7 +828,6 @@ class FloatingCounterService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        soundManager?.playSound(SoundManager.SoundType.FLOATING_DISMISS)
         settingsManager?.prefs?.unregisterOnSharedPreferenceChangeListener(prefListener)
         
         val wm = windowManager
