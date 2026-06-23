@@ -29,7 +29,6 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # FIXED: Added clean loop to wipe all cached older build fragments completely
     - name: Wipe Cache and Build Fresh Release APK
       run: |
         ./gradlew clean assembleRelease \
@@ -42,11 +41,12 @@ jobs:
     - name: Automatic GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: "latest-build"   
-        name: "Latest Production Build"
+        tag_name: "build-${{ github.run_id }}"
+        name: "Production Build #${{ github.run_number }}"
         draft: false
         prerelease: false
-        files: app/release/app-release.apk
-        overwrite: true
+        files: |
+          app/release/app-release.apk
+          app/build/outputs/apk/release/app-release.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
