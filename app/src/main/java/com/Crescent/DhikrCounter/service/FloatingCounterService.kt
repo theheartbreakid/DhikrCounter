@@ -77,6 +77,7 @@ class FloatingCounterService : LifecycleService() {
     private val displaySize = Point()
     private var isViewAttached = false
     private var isDismissAttached = false
+    private var isDismissedViaDrag = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var longPressRunnable: Runnable? = null
@@ -565,6 +566,7 @@ class FloatingCounterService : LifecycleService() {
         val icon = dismissIcon ?: return
         
         soundManager?.playSound(SoundManager.SoundType.FLOATING_DISMISS)
+        isDismissedViaDrag = true
 
         val centerX = displaySize.x / 2
         val centerY = displaySize.y - 120
@@ -828,6 +830,9 @@ class FloatingCounterService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (!isDismissedViaDrag) {
+            soundManager?.playSound(SoundManager.SoundType.FLOATING_DISMISS)
+        }
         settingsManager?.prefs?.unregisterOnSharedPreferenceChangeListener(prefListener)
         
         val wm = windowManager
