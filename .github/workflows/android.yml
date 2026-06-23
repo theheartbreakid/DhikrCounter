@@ -29,9 +29,10 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Build Secure Release APK
+    # FIXED: Added clean loop to wipe all cached older build fragments completely
+    - name: Wipe Cache and Build Fresh Release APK
       run: |
-        ./gradlew assembleRelease \
+        ./gradlew clean assembleRelease \
           -Pandroid.injected.signing.store.file=${{ github.workspace }}/app/release-keystore.jks \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
@@ -46,5 +47,6 @@ jobs:
         draft: false
         prerelease: false
         files: app/release/app-release.apk
+        overwrite: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
