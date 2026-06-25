@@ -54,6 +54,15 @@ class DhikrApplication : Application() {
             }
         }
 
+        // Listen for preference changes to update widgets in real time
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener { _, key ->
+            if (key != null && (key.startsWith("pref_") || key == "active_session_id")) {
+                applicationScope.launch(Dispatchers.IO) {
+                    com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets(this@DhikrApplication)
+                }
+            }
+        }
+
         // Check first launch
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val isFirstLaunch = prefs.getBoolean("is_first_launch", true)

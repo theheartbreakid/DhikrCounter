@@ -35,19 +35,18 @@ class MotivationWidget : GlanceAppWidget() {
         
         provideContent {
             GlanceTheme {
-                MotivationLayout(stats, todayCount, quote)
+                MotivationLayout(context, stats, todayCount, quote)
             }
         }
     }
 
     @Composable
-    private fun MotivationLayout(stats: GlobalStats, todayCount: Long, quote: String) {
+    private fun MotivationLayout(context: Context, stats: GlobalStats, todayCount: Long, quote: String) {
+        val padding = getWidgetPadding(context)
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(12.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
                 .clickable(actionRunCallback<OpenAppAction>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
@@ -56,34 +55,41 @@ class MotivationWidget : GlanceAppWidget() {
                 text = quote,
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurface,
-                    fontSize = 14.sp,
+                    fontSize = getWidgetFontSize(context, 14f),
                     fontWeight = FontWeight.Medium,
                     fontStyle = FontStyle.Italic,
                     textAlign = TextAlign.Center
                 ),
-                modifier = GlanceModifier.padding(horizontal = 8.dp)
+                modifier = GlanceModifier.padding(horizontal = padding)
             )
             
-            Spacer(GlanceModifier.height(16.dp))
+            Spacer(GlanceModifier.height(padding * 2))
             
             Row(modifier = GlanceModifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                InfoItem("Today", todayCount.toString())
-                Spacer(GlanceModifier.width(16.dp))
-                InfoItem("Streak", "${stats.currentStreak}d")
+                InfoItem(context, "Today", todayCount.toString())
+                Spacer(GlanceModifier.width(padding * 2))
+                InfoItem(context, "Streak", "${stats.currentStreak}d")
             }
         }
     }
 
     @Composable
-    private fun InfoItem(label: String, value: String) {
+    private fun InfoItem(context: Context, label: String, value: String) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = value,
-                style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(
+                    color = GlanceTheme.colors.primary, 
+                    fontSize = getWidgetFontSize(context, 16f), 
+                    fontWeight = FontWeight.Bold
+                )
             )
             Text(
                 text = label,
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurfaceVariant, 
+                    fontSize = getWidgetFontSize(context, 9f)
+                )
             )
         }
     }

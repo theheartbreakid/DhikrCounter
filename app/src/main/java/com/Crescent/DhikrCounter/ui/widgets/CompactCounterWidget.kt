@@ -22,31 +22,35 @@ class CompactCounterWidget : GlanceAppWidget() {
         
         provideContent {
             GlanceTheme {
-                CompactLayout(session)
+                CompactLayout(context, session)
             }
         }
     }
 
     @Composable
-    private fun CompactLayout(session: SessionEntity?) {
+    private fun CompactLayout(context: Context, session: SessionEntity?) {
         Row(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(12.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
                 .clickable(actionRunCallback<OpenAppAction>()),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (session == null) {
-                Text("DhikrCounter++", style = TextStyle(color = GlanceTheme.colors.onSurface))
+                Text(
+                    text = "DhikrCounter++", 
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurface,
+                        fontSize = getWidgetFontSize(context, 14f)
+                    )
+                )
             } else {
                 Column(modifier = GlanceModifier.defaultWeight()) {
                     Text(
                         text = session.name,
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
-                            fontSize = 12.sp,
+                            fontSize = getWidgetFontSize(context, 12f),
                             fontWeight = FontWeight.Medium
                         ),
                         maxLines = 1
@@ -57,7 +61,7 @@ class CompactCounterWidget : GlanceAppWidget() {
                     text = session.count.toString(),
                     style = TextStyle(
                         color = GlanceTheme.colors.primary,
-                        fontSize = 24.sp,
+                        fontSize = getWidgetFontSize(context, 24f),
                         fontWeight = FontWeight.Bold
                     )
                 )

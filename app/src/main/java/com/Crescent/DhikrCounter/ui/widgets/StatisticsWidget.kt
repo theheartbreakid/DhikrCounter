@@ -25,97 +25,113 @@ class StatisticsWidget : GlanceAppWidget() {
         
         provideContent {
             GlanceTheme {
-                StatisticsLayout(stats, todayCount, weeklyCount, monthlyCount)
+                StatisticsLayout(context, stats, todayCount, weeklyCount, monthlyCount)
             }
         }
     }
 
     @Composable
-    private fun StatisticsLayout(stats: GlobalStats, today: Long, weekly: Long, monthly: Long) {
+    private fun StatisticsLayout(context: Context, stats: GlobalStats, today: Long, weekly: Long, monthly: Long) {
+        val padding = getWidgetPadding(context)
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(16.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
                 .clickable(actionRunCallback<OpenAppAction>()),
         ) {
             Text(
                 text = "STATISTICS",
                 style = TextStyle(
                     color = GlanceTheme.colors.primary,
-                    fontSize = 14.sp,
+                    fontSize = getWidgetFontSize(context, 14f),
                     fontWeight = FontWeight.Bold
                 )
             )
             
-            Spacer(GlanceModifier.height(12.dp))
+            Spacer(GlanceModifier.height(padding))
             
             Row(modifier = GlanceModifier.fillMaxWidth()) {
-                StatBox("Today", today.toString(), GlanceModifier.defaultWeight())
-                Spacer(GlanceModifier.width(8.dp))
-                StatBox("Weekly", formatCount(weekly), GlanceModifier.defaultWeight())
+                StatBox(context, "Today", today.toString(), GlanceModifier.defaultWeight())
+                Spacer(GlanceModifier.width(padding))
+                StatBox(context, "Weekly", formatCount(weekly), GlanceModifier.defaultWeight())
             }
             
-            Spacer(GlanceModifier.height(8.dp))
+            Spacer(GlanceModifier.height(padding))
             
             Row(modifier = GlanceModifier.fillMaxWidth()) {
-                StatBox("Monthly", formatCount(monthly), GlanceModifier.defaultWeight())
-                Spacer(GlanceModifier.width(8.dp))
-                StatBox("Lifetime", formatCount(stats.totalCount), GlanceModifier.defaultWeight())
+                StatBox(context, "Monthly", formatCount(monthly), GlanceModifier.defaultWeight())
+                Spacer(GlanceModifier.width(padding))
+                StatBox(context, "Lifetime", formatCount(stats.totalCount), GlanceModifier.defaultWeight())
             }
             
-            Spacer(GlanceModifier.height(16.dp))
+            Spacer(GlanceModifier.height(padding))
             
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 Box(modifier = GlanceModifier.defaultWeight()) {
-                    StatDetail("Active Sessions", stats.activeSessions.toString())
+                    StatDetail(context, "Active Sessions", stats.activeSessions.toString())
                 }
                 Box(modifier = GlanceModifier.defaultWeight()) {
-                    StatDetail("Goals Done", stats.totalGoalsCompleted.toString())
+                    StatDetail(context, "Goals Done", stats.totalGoalsCompleted.toString())
                 }
             }
             
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 Box(modifier = GlanceModifier.defaultWeight()) {
-                    StatDetail("Streak", "${stats.currentStreak} days")
+                    StatDetail(context, "Streak", "${stats.currentStreak} days")
                 }
                 Box(modifier = GlanceModifier.defaultWeight()) {
-                    StatDetail("Best Streak", "${stats.longestStreak} days")
+                    StatDetail(context, "Best Streak", "${stats.longestStreak} days")
                 }
             }
         }
     }
 
     @Composable
-    private fun StatBox(label: String, value: String, modifier: GlanceModifier) {
+    private fun StatBox(context: Context, label: String, value: String, modifier: GlanceModifier) {
+        val app = context.applicationContext as DhikrApplication
+        val radius = app.settingsManager.getWidgetCornerRadius() / 2f
         Column(
             modifier = modifier
                 .background(GlanceTheme.colors.primaryContainer)
-                .padding(8.dp),
+                .cornerRadius(radius.dp)
+                .padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value,
-                style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onPrimaryContainer, 
+                    fontSize = getWidgetFontSize(context, 16f), 
+                    fontWeight = FontWeight.Bold
+                )
             )
             Text(
                 text = label,
-                style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = 10.sp)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onPrimaryContainer, 
+                    fontSize = getWidgetFontSize(context, 9f)
+                )
             )
         }
     }
 
     @Composable
-    private fun StatDetail(label: String, value: String) {
-        Column(modifier = GlanceModifier.padding(vertical = 4.dp)) {
+    private fun StatDetail(context: Context, label: String, value: String) {
+        Column(modifier = GlanceModifier.padding(vertical = 2.dp)) {
             Text(
                 text = label,
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurfaceVariant, 
+                    fontSize = getWidgetFontSize(context, 9f)
+                )
             )
             Text(
                 text = value,
-                style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurface, 
+                    fontSize = getWidgetFontSize(context, 12f), 
+                    fontWeight = FontWeight.Medium
+                )
             )
         }
     }

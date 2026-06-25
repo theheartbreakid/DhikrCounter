@@ -26,41 +26,50 @@ class MultiSessionWidget : GlanceAppWidget() {
         
         provideContent {
             GlanceTheme {
-                MultiSessionLayout(sessions)
+                MultiSessionLayout(context, sessions)
             }
         }
     }
 
     @Composable
-    private fun MultiSessionLayout(sessions: List<SessionEntity>) {
+    private fun MultiSessionLayout(context: Context, sessions: List<SessionEntity>) {
+        val padding = getWidgetPadding(context)
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(8.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
         ) {
             Text(
                 text = "Sessions",
-                modifier = GlanceModifier.padding(8.dp),
-                style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                modifier = GlanceModifier.padding(padding),
+                style = TextStyle(
+                    color = GlanceTheme.colors.primary, 
+                    fontSize = getWidgetFontSize(context, 16f), 
+                    fontWeight = FontWeight.Bold
+                )
             )
             
             LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                 items(sessions) { session ->
-                    SessionItem(session)
+                    SessionItem(context, session)
                 }
             }
         }
     }
 
     @Composable
-    private fun SessionItem(session: SessionEntity) {
+    private fun SessionItem(context: Context, session: SessionEntity) {
+        val app = context.applicationContext as DhikrApplication
+        val radius = app.settingsManager.getWidgetCornerRadius() / 2f
+        val padding = getWidgetPadding(context)
+        
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(vertical = padding / 2)
                 .background(GlanceTheme.colors.surfaceVariant)
+                .cornerRadius(radius.dp)
+                .padding(padding)
                 .clickable(actionRunCallback<SelectSessionAction>(
                     actionParametersOf(SessionIdKey to session.id)
                 )),
@@ -69,21 +78,32 @@ class MultiSessionWidget : GlanceAppWidget() {
             Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
                     text = session.name,
-                    style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurface, 
+                        fontSize = getWidgetFontSize(context, 14f), 
+                        fontWeight = FontWeight.Medium
+                    ),
                     maxLines = 1
                 )
                 if (session.goalCount > 0) {
                     val progress = (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
                     Text(
                         text = "Goal: ${(progress * 100).toInt()}%",
-                        style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp)
+                        style = TextStyle(
+                            color = GlanceTheme.colors.onSurfaceVariant, 
+                            fontSize = getWidgetFontSize(context, 10f)
+                        )
                     )
                 }
             }
             
             Text(
                 text = session.count.toString(),
-                style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(
+                    color = GlanceTheme.colors.primary, 
+                    fontSize = getWidgetFontSize(context, 18f), 
+                    fontWeight = FontWeight.Bold
+                )
             )
         }
     }

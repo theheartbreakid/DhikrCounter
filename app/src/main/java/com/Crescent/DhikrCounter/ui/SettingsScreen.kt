@@ -79,6 +79,21 @@ fun SettingsScreen(
     var floatingOpacity by remember { mutableStateOf(settingsManager.bubbleOpacity) }
     var floatingSize by remember { mutableStateOf(settingsManager.bubbleSize.toFloat()) }
 
+    // Widget Appearance
+    var widgetCornerRadius by remember { mutableStateOf(settingsManager.getWidgetCornerRadius()) }
+    var widgetOpacity by remember { mutableStateOf(settingsManager.getWidgetOpacity()) }
+    var widgetBlur by remember { mutableStateOf(settingsManager.getWidgetBlurStrength()) }
+    var glassTransparency by remember { mutableStateOf(settingsManager.getGlassTransparency()) }
+    var tintIntensity by remember { mutableStateOf(settingsManager.getBackgroundTintIntensity()) }
+    var borderThickness by remember { mutableStateOf(settingsManager.getBorderThickness()) }
+    var borderOpacity by remember { mutableStateOf(settingsManager.getBorderOpacity()) }
+    var shadowIntensity by remember { mutableStateOf(settingsManager.getShadowIntensity()) }
+    var widgetIconSize by remember { mutableStateOf(settingsManager.getWidgetIconSize()) }
+    var widgetFontScale by remember { mutableStateOf(settingsManager.getWidgetFontScale()) }
+    var progressThickness by remember { mutableStateOf(settingsManager.getProgressRingThickness()) }
+    var widgetCompact by remember { mutableStateOf(settingsManager.isWidgetCompactMode()) }
+    var amoledWidget by remember { mutableStateOf(settingsManager.isAmoledWidgetEnabled()) }
+
     DisposableEffect(prefs) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
             if (key == "pref_floating_enabled") {
@@ -288,6 +303,151 @@ fun SettingsScreen(
                     onValueChange = { 
                         floatingOpacity = it
                         prefs.edit().putFloat("pref_bubble_opacity", it).apply() 
+                    }
+                )
+            }
+
+            item { SettingsHeader("Widget Appearance") }
+            item {
+                SliderPreference(
+                    title = "Widget Corner Radius",
+                    value = widgetCornerRadius,
+                    valueRange = 0f..48f,
+                    onValueChange = { 
+                        widgetCornerRadius = it
+                        prefs.edit().putFloat("pref_widget_corner_radius", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Widget Opacity",
+                    value = widgetOpacity,
+                    valueRange = 0.0f..1.0f,
+                    onValueChange = { 
+                        widgetOpacity = it
+                        prefs.edit().putFloat("pref_widget_opacity", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Widget Blur Strength",
+                    value = widgetBlur,
+                    valueRange = 0.0f..25.0f,
+                    onValueChange = { 
+                        widgetBlur = it
+                        prefs.edit().putFloat("pref_widget_blur", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Glass Transparency",
+                    value = glassTransparency,
+                    valueRange = 0.0f..1.0f,
+                    onValueChange = { 
+                        glassTransparency = it
+                        prefs.edit().putFloat("pref_glass_transparency", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Background Tint Intensity",
+                    value = tintIntensity,
+                    valueRange = 0.0f..1.0f,
+                    onValueChange = { 
+                        tintIntensity = it
+                        prefs.edit().putFloat("pref_tint_intensity", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Border Thickness",
+                    value = borderThickness,
+                    valueRange = 0.0f..5.0f,
+                    onValueChange = { 
+                        borderThickness = it
+                        prefs.edit().putFloat("pref_border_thickness", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Border Opacity",
+                    value = borderOpacity,
+                    valueRange = 0.0f..1.0f,
+                    onValueChange = { 
+                        borderOpacity = it
+                        prefs.edit().putFloat("pref_border_opacity", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Shadow Intensity",
+                    value = shadowIntensity,
+                    valueRange = 0.0f..1.0f,
+                    onValueChange = { 
+                        shadowIntensity = it
+                        prefs.edit().putFloat("pref_shadow_intensity", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Icon Size",
+                    value = widgetIconSize,
+                    valueRange = 12f..48f,
+                    onValueChange = { 
+                        widgetIconSize = it
+                        prefs.edit().putFloat("pref_widget_icon_size", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Font Scale",
+                    value = widgetFontScale,
+                    valueRange = 0.5f..2.0f,
+                    onValueChange = { 
+                        widgetFontScale = it
+                        prefs.edit().putFloat("pref_widget_font_scale", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Progress Ring Thickness",
+                    value = progressThickness,
+                    valueRange = 1.0f..10.0f,
+                    onValueChange = { 
+                        progressThickness = it
+                        prefs.edit().putFloat("pref_progress_thickness", it).apply() 
+                    }
+                )
+            }
+            item {
+                SwitchPreference(
+                    title = "Compact Mode",
+                    subtitle = "Reduces padding and margins",
+                    checked = widgetCompact,
+                    onCheckedChange = { 
+                        widgetCompact = it
+                        prefs.edit().putBoolean("pref_widget_compact", it).apply() 
+                    }
+                )
+            }
+            item {
+                SwitchPreference(
+                    title = "AMOLED Widget Mode",
+                    subtitle = "Pure black background for widgets",
+                    checked = amoledWidget,
+                    onCheckedChange = { 
+                        amoledWidget = it
+                        prefs.edit().putBoolean("pref_amoled_widget", it).apply()
                     }
                 )
             }

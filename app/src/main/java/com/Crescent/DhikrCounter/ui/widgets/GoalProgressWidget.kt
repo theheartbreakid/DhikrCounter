@@ -22,54 +22,71 @@ class GoalProgressWidget : GlanceAppWidget() {
         
         provideContent {
             GlanceTheme {
-                GoalProgressLayout(session)
+                GoalProgressLayout(context, session)
             }
         }
     }
 
     @Composable
-    private fun GoalProgressLayout(session: SessionEntity?) {
+    private fun GoalProgressLayout(context: Context, session: SessionEntity?) {
+        val app = context.applicationContext as DhikrApplication
+        val padding = getWidgetPadding(context)
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(12.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
                 .clickable(actionRunCallback<OpenAppAction>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (session == null || session.goalCount == 0L) {
-                Text("No Goal", style = TextStyle(color = GlanceTheme.colors.onSurface))
+                Text(
+                    text = "No Goal", 
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurface,
+                        fontSize = getWidgetFontSize(context, 14f)
+                    )
+                )
             } else {
                 val progress = (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
                 val remaining = maxOf(0, session.goalCount - session.count)
                 
                 Text(
                     text = session.name,
-                    style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp),
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurfaceVariant, 
+                        fontSize = getWidgetFontSize(context, 12f)
+                    ),
                     maxLines = 1
                 )
                 
-                Spacer(GlanceModifier.height(8.dp))
+                Spacer(GlanceModifier.height(padding / 2))
                 
                 Text(
                     text = "${(progress * 100).toInt()}%",
-                    style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                    style = TextStyle(
+                        color = GlanceTheme.colors.primary, 
+                        fontSize = getWidgetFontSize(context, 32f), 
+                        fontWeight = FontWeight.Bold
+                    )
                 )
                 
                 LinearProgressIndicator(
                     progress = progress,
-                    modifier = GlanceModifier.fillMaxWidth().height(8.dp),
+                    modifier = GlanceModifier.fillMaxWidth().height(app.settingsManager.getProgressRingThickness().dp),
                     color = GlanceTheme.colors.primary,
                     backgroundColor = GlanceTheme.colors.surfaceVariant
                 )
                 
-                Spacer(GlanceModifier.height(8.dp))
+                Spacer(GlanceModifier.height(padding / 2))
                 
                 Text(
                     text = "$remaining left",
-                    style = TextStyle(color = GlanceTheme.colors.secondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    style = TextStyle(
+                        color = GlanceTheme.colors.secondary, 
+                        fontSize = getWidgetFontSize(context, 12f), 
+                        fontWeight = FontWeight.Medium
+                    )
                 )
             }
         }

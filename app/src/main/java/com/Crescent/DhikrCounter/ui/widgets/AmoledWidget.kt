@@ -24,41 +24,59 @@ class AmoledWidget : GlanceAppWidget() {
         val session = if (activeId != -1L) app.sessionRepository.getSession(activeId) else null
         
         provideContent {
-            AmoledLayout(session)
+            AmoledLayout(context, session)
         }
     }
 
     @Composable
-    private fun AmoledLayout(session: SessionEntity?) {
+    private fun AmoledLayout(context: Context, session: SessionEntity?) {
         val black = ColorProvider(Color(0xFF000000))
         val white = ColorProvider(Color(0xFFFFFFFF))
         val gray = ColorProvider(Color(0xFF888888))
         val darkGray = ColorProvider(Color(0xFF222222))
         
+        val app = context.applicationContext as DhikrApplication
+        val padding = getWidgetPadding(context)
+        val radius = app.settingsManager.getWidgetCornerRadius()
+        
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(black)
-                .padding(12.dp)
+                .cornerRadius(radius.dp)
+                .padding(padding)
                 .appWidgetBackground()
                 .clickable(actionRunCallback<OpenAppAction>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (session == null) {
-                Text("DhikrCounter++", style = TextStyle(color = white, fontSize = 16.sp))
+                Text(
+                    text = "DhikrCounter++", 
+                    style = TextStyle(
+                        color = white, 
+                        fontSize = getWidgetFontSize(context, 16f)
+                    )
+                )
             } else {
                 Text(
                     text = session.name,
-                    style = TextStyle(color = gray, fontSize = 14.sp),
+                    style = TextStyle(
+                        color = gray, 
+                        fontSize = getWidgetFontSize(context, 12f)
+                    ),
                     maxLines = 1
                 )
                 
-                Spacer(GlanceModifier.height(8.dp))
+                Spacer(GlanceModifier.height(padding))
                 
                 Text(
                     text = session.count.toString(),
-                    style = TextStyle(color = white, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+                    style = TextStyle(
+                        color = white, 
+                        fontSize = getWidgetFontSize(context, 48f), 
+                        fontWeight = FontWeight.Bold
+                    )
                 )
                 
                 Spacer(GlanceModifier.defaultWeight())
@@ -67,26 +85,47 @@ class AmoledWidget : GlanceAppWidget() {
                     modifier = GlanceModifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    AmoledButton("-", actionRunCallback<DecrementAction>(actionParametersOf(SessionIdKey to session.id)), darkGray, white)
-                    Spacer(GlanceModifier.width(24.dp))
-                    AmoledButton("+", actionRunCallback<IncrementAction>(actionParametersOf(SessionIdKey to session.id)), white, black)
+                    AmoledButton(
+                        context,
+                        "-", 
+                        actionRunCallback<DecrementAction>(actionParametersOf(SessionIdKey to session.id)), 
+                        darkGray, 
+                        white
+                    )
+                    Spacer(GlanceModifier.width(padding * 2))
+                    AmoledButton(
+                        context,
+                        "+", 
+                        actionRunCallback<IncrementAction>(actionParametersOf(SessionIdKey to session.id)), 
+                        white, 
+                        black
+                    )
                 }
             }
         }
     }
 
     @Composable
-    private fun AmoledButton(text: String, onClick: androidx.glance.action.Action, bgColor: ColorProvider, textColor: ColorProvider) {
+    private fun AmoledButton(context: Context, text: String, onClick: androidx.glance.action.Action, bgColor: ColorProvider, textColor: ColorProvider) {
+        val app = context.applicationContext as DhikrApplication
+        val radius = app.settingsManager.getWidgetCornerRadius() / 2f
+        val size = if (app.settingsManager.isWidgetCompactMode()) 40.dp else 48.dp
+        
         Box(
             modifier = GlanceModifier
-                .size(48.dp)
+                .size(size)
                 .background(bgColor)
+                .cornerRadius(radius.dp)
                 .clickable(onClick),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = text,
-                style = TextStyle(color = textColor, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(
+                    color = textColor, 
+                    fontSize = getWidgetFontSize(context, 24f), 
+                    fontWeight = FontWeight.Bold
+                )
             )
         }
     }

@@ -26,71 +26,92 @@ class DashboardWidget : GlanceAppWidget() {
         
         provideContent {
             GlanceTheme {
-                DashboardLayout(session, stats, todayCount)
+                DashboardLayout(context, session, stats, todayCount)
             }
         }
     }
 
     @Composable
-    private fun DashboardLayout(session: SessionEntity?, stats: GlobalStats, todayCount: Long) {
+    private fun DashboardLayout(context: Context, session: SessionEntity?, stats: GlobalStats, todayCount: Long) {
+        val padding = getWidgetPadding(context)
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(12.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
                 .clickable(actionRunCallback<OpenAppAction>()),
         ) {
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = GlanceModifier.defaultWeight()) {
                     Text(
                         text = session?.name ?: "No Active Session",
-                        style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                        style = TextStyle(
+                            color = GlanceTheme.colors.primary, 
+                            fontSize = getWidgetFontSize(context, 16f), 
+                            fontWeight = FontWeight.Bold
+                        ),
                         maxLines = 1
                     )
                     Text(
-                        text = "Current Count: ${session?.count ?: 0}",
-                        style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp)
+                        text = "Current: ${session?.count ?: 0}",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.onSurfaceVariant, 
+                            fontSize = getWidgetFontSize(context, 12f)
+                        )
                     )
                 }
                 
                 if (session != null && session.goalCount > 0) {
                     val progress = (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
                     Text(
-                        text = "${(progress * 100).toInt()}% Goal",
-                        style = TextStyle(color = GlanceTheme.colors.secondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        text = "${(progress * 100).toInt()}%",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.secondary, 
+                            fontSize = getWidgetFontSize(context, 12f), 
+                            fontWeight = FontWeight.Bold
+                        )
                     )
                 }
             }
             
-            Spacer(GlanceModifier.height(12.dp))
+            Spacer(GlanceModifier.height(padding))
             
             Row(modifier = GlanceModifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                StatItem("Today", todayCount.toString())
-                Spacer(GlanceModifier.width(8.dp))
-                StatItem("Streak", "${stats.currentStreak}d")
-                Spacer(GlanceModifier.width(8.dp))
-                StatItem("Lifetime", formatCount(stats.totalCount))
+                StatItem(context, "Today", todayCount.toString())
+                Spacer(GlanceModifier.width(padding))
+                StatItem(context, "Streak", "${stats.currentStreak}d")
+                Spacer(GlanceModifier.width(padding))
+                StatItem(context, "Total", formatCount(stats.totalCount))
             }
         }
     }
 
     @Composable
-    private fun RowScope.StatItem(label: String, value: String) {
+    private fun RowScope.StatItem(context: Context, label: String, value: String) {
+        val app = context.applicationContext as DhikrApplication
+        val radius = app.settingsManager.getWidgetCornerRadius() / 2f
+        
         Column(
             modifier = GlanceModifier
                 .defaultWeight()
                 .background(GlanceTheme.colors.surfaceVariant)
-                .padding(8.dp),
+                .cornerRadius(radius.dp)
+                .padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value,
-                style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurface, 
+                    fontSize = getWidgetFontSize(context, 13f), 
+                    fontWeight = FontWeight.Bold
+                )
             )
             Text(
                 text = label,
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp)
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurfaceVariant, 
+                    fontSize = getWidgetFontSize(context, 9f)
+                )
             )
         }
     }

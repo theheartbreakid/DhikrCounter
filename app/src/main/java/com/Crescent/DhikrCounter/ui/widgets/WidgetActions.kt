@@ -46,6 +46,15 @@ class DecrementAction : ActionCallback {
     }
 }
 
+class OpenAppAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val intent = android.content.Intent(context, com.Crescent.DhikrCounter.MainActivity::class.java).apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+    }
+}
+
 val SessionIdKey = ActionParameters.Key<Long>("sessionId")
 
 suspend fun updateAllWidgets(context: Context) {

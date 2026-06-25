@@ -33,12 +33,11 @@ class QuickCounterWidget : GlanceAppWidget() {
 
     @Composable
     private fun QuickCounterLayout(context: Context, session: SessionEntity?) {
+        val padding = getWidgetPadding(context)
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
-                .padding(8.dp)
-                .appWidgetBackground()
+                .applyWidgetStyle(context)
                 .clickable(actionRunCallback<OpenAppAction>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
@@ -46,26 +45,30 @@ class QuickCounterWidget : GlanceAppWidget() {
             if (session == null) {
                 Text(
                     text = "No Active Session",
-                    style = TextStyle(color = GlanceTheme.colors.onSurface, fontWeight = FontWeight.Medium)
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurface, 
+                        fontSize = getWidgetFontSize(context, 14f),
+                        fontWeight = FontWeight.Medium
+                    )
                 )
             } else {
                 Text(
                     text = session.name,
                     style = TextStyle(
                         color = GlanceTheme.colors.onSurfaceVariant,
-                        fontSize = 12.sp,
+                        fontSize = getWidgetFontSize(context, 12f),
                         fontWeight = FontWeight.Medium
                     ),
                     maxLines = 1
                 )
                 
-                Spacer(GlanceModifier.height(4.dp))
+                Spacer(GlanceModifier.height(padding / 2))
                 
                 Text(
                     text = session.count.toString(),
                     style = TextStyle(
                         color = GlanceTheme.colors.primary,
-                        fontSize = 32.sp,
+                        fontSize = getWidgetFontSize(context, 32f),
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -75,7 +78,10 @@ class QuickCounterWidget : GlanceAppWidget() {
                     val percent = (progress * 100).toInt()
                     Text(
                         text = "Goal: $percent%",
-                        style = TextStyle(color = GlanceTheme.colors.secondary, fontSize = 10.sp)
+                        style = TextStyle(
+                            color = GlanceTheme.colors.secondary, 
+                            fontSize = getWidgetFontSize(context, 10f)
+                        )
                     )
                 }
 
@@ -87,15 +93,17 @@ class QuickCounterWidget : GlanceAppWidget() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     WidgetButton(
+                        context = context,
                         text = "-",
                         onClick = actionRunCallback<DecrementAction>(
                             actionParametersOf(SessionIdKey to session.id)
                         )
                     )
                     
-                    Spacer(GlanceModifier.width(16.dp))
+                    Spacer(GlanceModifier.width(padding * 2))
                     
                     WidgetButton(
+                        context = context,
                         text = "+",
                         onClick = actionRunCallback<IncrementAction>(
                             actionParametersOf(SessionIdKey to session.id)
@@ -109,15 +117,20 @@ class QuickCounterWidget : GlanceAppWidget() {
 
     @Composable
     private fun WidgetButton(
+        context: Context,
         text: String,
         onClick: androidx.glance.action.Action,
         isPrimary: Boolean = false
     ) {
+        val app = context.applicationContext as DhikrApplication
+        val radius = app.settingsManager.getWidgetCornerRadius() / 2f
+        val size = if (app.settingsManager.isWidgetCompactMode()) 40.dp else 48.dp
+        
         Box(
             modifier = GlanceModifier
-                .size(44.dp)
+                .size(size)
                 .background(if (isPrimary) GlanceTheme.colors.primary else GlanceTheme.colors.secondaryContainer)
-                .padding(4.dp)
+                .cornerRadius(radius.dp)
                 .clickable(onClick),
             contentAlignment = Alignment.Center
         ) {
@@ -125,7 +138,7 @@ class QuickCounterWidget : GlanceAppWidget() {
                 text = text,
                 style = TextStyle(
                     color = if (isPrimary) GlanceTheme.colors.onPrimary else GlanceTheme.colors.onSecondaryContainer,
-                    fontSize = 24.sp,
+                    fontSize = getWidgetFontSize(context, 20f),
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -135,13 +148,4 @@ class QuickCounterWidget : GlanceAppWidget() {
 
 class QuickCounterWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = QuickCounterWidget()
-}
-
-class OpenAppAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val intent = android.content.Intent(context, MainActivity::class.java).apply {
-            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(intent)
-    }
 }
