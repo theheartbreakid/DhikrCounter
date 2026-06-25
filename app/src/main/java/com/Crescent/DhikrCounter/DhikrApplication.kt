@@ -40,6 +40,18 @@ class DhikrApplication : Application() {
         // Sanity Check on Startup
         applicationScope.launch(Dispatchers.IO) {
             validateAndRecoverData()
+            
+            // Listen for changes and update widgets
+            launch {
+                sessionRepository.allSessionsFlow.collect {
+                    com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets(this@DhikrApplication)
+                }
+            }
+            launch {
+                historyRepository.allHistoryFlow.collect {
+                    com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets(this@DhikrApplication)
+                }
+            }
         }
 
         // Check first launch
