@@ -1,7 +1,9 @@
 package com.Crescent.DhikrCounter
 
 import android.app.Application
+import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import androidx.glance.appwidget.updateAll
 import com.Crescent.DhikrCounter.data.SessionEntity
 import com.Crescent.DhikrCounter.data.SessionRepository
 import com.Crescent.DhikrCounter.data.HistoryRepository
@@ -27,6 +29,9 @@ class DhikrApplication : Application() {
         private set
         
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    
+    // Store reference to prevent garbage collection
+    private lateinit var prefListener: SharedPreferences.OnSharedPreferenceChangeListener
 
     override fun onCreate() {
         super.onCreate()
@@ -41,27 +46,28 @@ class DhikrApplication : Application() {
         applicationScope.launch(Dispatchers.IO) {
             validateAndRecoverData()
             
-            // Listen for changes and update widgets
+            // Listen for changes and update specific widgets
             launch {
                 sessionRepository.allSessionsFlow.collect {
-                    com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets(this@DhikrApplication)
+                    com.Crescent.DhikrCounter.ui.widgets.CounterWidget().updateAll(this@DhikrApplication)
                 }
             }
             launch {
                 historyRepository.allHistoryFlow.collect {
-                    com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets(this@DhikrApplication)
+                    com.Crescent.DhikrCounter.ui.widgets.MotivationWidget().updateAll(this@DhikrApplication)
                 }
             }
         }
 
-        // Listen for preference changes to update widgets in real time
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener { _, key ->
-            if (key != null && (key.startsWith("pref_") || key == "active_session_id")) {
+        // Strong reference listener for preference changes
+        prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key != null && (key.startsWith("pref_") || key == "active_session_id" || key.startsWith("widget_"))) {
                 applicationScope.launch(Dispatchers.IO) {
                     com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets(this@DhikrApplication)
                 }
             }
         }
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(prefListener)
 
         // Check first launch
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -86,8 +92,6 @@ class DhikrApplication : Application() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            // If DB is totally corrupted, fallbackToDestructiveMigration in AppDatabase should have cleared it,
-            // resulting in empty sessions list and handled above.
         }
     }
 

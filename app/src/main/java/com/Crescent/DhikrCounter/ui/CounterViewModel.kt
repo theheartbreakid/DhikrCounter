@@ -49,8 +49,14 @@ class CounterViewModel(
             "pref_allow_negative" -> isNegativeCountAllowed.postValue(p.getBoolean("pref_allow_negative", false))
             "pref_confirm_reset" -> isConfirmResetEnabled.postValue(p.getBoolean("pref_confirm_reset", true))
             "pref_corner_radius" -> cornerRadius.postValue(p.getFloat("pref_corner_radius", 24f))
+            "active_session_id" -> {
+                val newId = p.getLong("active_session_id", -1L)
+                if (newId != activeSessionId.value) {
+                    activeSessionId.postValue(newId)
+                }
+            }
         }
-        if (key != null && key.startsWith("pref_widget_")) {
+        if (key != null && (key.startsWith("pref_widget_") || key == "pref_amoled_mode" || key == "pref_theme_mode" || key == "pref_dynamic_colors")) {
             viewModelScope.launch { updateAllWidgets(getApplication()) }
         }
     }

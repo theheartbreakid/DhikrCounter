@@ -41,6 +41,7 @@ import com.Crescent.DhikrCounter.data.SessionRepository
 import com.Crescent.DhikrCounter.data.HistoryRepository
 import com.Crescent.DhikrCounter.utils.SettingsManager
 import com.Crescent.DhikrCounter.utils.SoundManager
+import com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -777,6 +778,7 @@ class FloatingCounterService : LifecycleService() {
             lifecycleScope.launch {
                 repo.incrementCount(current.id, current.incrementValue)
                 hr.logEvent(current.id, current.name, "COUNT_CHANGED", current.incrementValue)
+                updateAllWidgets(this@FloatingCounterService)
                 launch(Dispatchers.Main) {
                     if (current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount) {
                         soundManager?.playSound(SoundManager.SoundType.GOAL_REACHED)
@@ -796,6 +798,7 @@ class FloatingCounterService : LifecycleService() {
             lifecycleScope.launch {
                 repo.decrementCount(current.id, current.incrementValue, sm.isNegativeCountAllowed)
                 hr.logEvent(current.id, current.name, "COUNT_CHANGED", -current.incrementValue)
+                updateAllWidgets(this@FloatingCounterService)
                 launch(Dispatchers.Main) {
                     soundManager?.playSound(SoundManager.SoundType.DECREMENT)
                 }
@@ -821,6 +824,7 @@ class FloatingCounterService : LifecycleService() {
             lifecycleScope.launch {
                 repo.resetCount(current.id)
                 hr.logEvent(current.id, current.name, "RESET", -current.count)
+                updateAllWidgets(this@FloatingCounterService)
                 launch(Dispatchers.Main) {
                     soundManager?.playSound(SoundManager.SoundType.RESET)
                 }
