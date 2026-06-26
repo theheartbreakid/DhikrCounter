@@ -58,7 +58,7 @@ class OpenAppAction : ActionCallback {
 val SessionIdKey = ActionParameters.Key<Long>("sessionId")
 
 suspend fun updateAllWidgets(context: Context) {
-    QuickCounterWidget().updateAll(context)
+    CounterWidget().updateAll(context)
     CompactCounterWidget().updateAll(context)
     DashboardWidget().updateAll(context)
     StatisticsWidget().updateAll(context)

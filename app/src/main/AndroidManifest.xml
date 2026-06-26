@@ -41,7 +41,7 @@
         </service>
             
         <receiver
-            android:name=".ui.widgets.QuickCounterWidgetReceiver"
+            android:name=".ui.widgets.CounterWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
