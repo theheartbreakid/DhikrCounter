@@ -3,6 +3,7 @@ package com.Crescent.DhikrCounter.ui
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.Crescent.DhikrCounter.DhikrApplication
@@ -80,19 +83,15 @@ fun SettingsScreen(
     var floatingSize by remember { mutableStateOf(settingsManager.bubbleSize.toFloat()) }
 
     // Widget Appearance
+    var widgetStyle by remember { mutableStateOf(settingsManager.getWidgetStyle()) }
     var widgetCornerRadius by remember { mutableStateOf(settingsManager.getWidgetCornerRadius()) }
+    var widgetScale by remember { mutableStateOf(settingsManager.getWidgetScale()) }
+    var widgetDepth by remember { mutableStateOf(settingsManager.getWidgetDepth()) }
     var widgetOpacity by remember { mutableStateOf(settingsManager.getWidgetOpacity()) }
-    var widgetBlur by remember { mutableStateOf(settingsManager.getWidgetBlurStrength()) }
-    var glassTransparency by remember { mutableStateOf(settingsManager.getGlassTransparency()) }
-    var tintIntensity by remember { mutableStateOf(settingsManager.getBackgroundTintIntensity()) }
-    var borderThickness by remember { mutableStateOf(settingsManager.getBorderThickness()) }
-    var borderOpacity by remember { mutableStateOf(settingsManager.getBorderOpacity()) }
-    var shadowIntensity by remember { mutableStateOf(settingsManager.getShadowIntensity()) }
-    var widgetIconSize by remember { mutableStateOf(settingsManager.getWidgetIconSize()) }
-    var widgetFontScale by remember { mutableStateOf(settingsManager.getWidgetFontScale()) }
-    var progressThickness by remember { mutableStateOf(settingsManager.getProgressRingThickness()) }
-    var widgetCompact by remember { mutableStateOf(settingsManager.isWidgetCompactMode()) }
-    var amoledWidget by remember { mutableStateOf(settingsManager.isAmoledWidgetEnabled()) }
+    var widgetAnimation by remember { mutableStateOf(settingsManager.getWidgetAnimation()) }
+    
+    var showStyleDialog by remember { mutableStateOf(false) }
+    var showAnimationDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(prefs) {
         val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { p, key ->
@@ -309,6 +308,27 @@ fun SettingsScreen(
 
             item { SettingsHeader("Widget Appearance") }
             item {
+                WidgetPreview(
+                    style = widgetStyle,
+                    cornerRadius = widgetCornerRadius,
+                    scale = widgetScale,
+                    depth = widgetDepth,
+                    opacity = widgetOpacity
+                )
+            }
+            item {
+                Surface(
+                    onClick = { showStyleDialog = true },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Widget Style", fontWeight = FontWeight.SemiBold) },
+                        supportingContent = { Text(widgetStyle) }
+                    )
+                }
+            }
+            item {
                 SliderPreference(
                     title = "Widget Corner Radius",
                     value = widgetCornerRadius,
@@ -316,6 +336,28 @@ fun SettingsScreen(
                     onValueChange = { 
                         widgetCornerRadius = it
                         prefs.edit().putFloat("pref_widget_corner_radius", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Widget Scale",
+                    value = widgetScale,
+                    valueRange = 0.5f..1.5f,
+                    onValueChange = { 
+                        widgetScale = it
+                        prefs.edit().putFloat("pref_widget_scale", it).apply() 
+                    }
+                )
+            }
+            item {
+                SliderPreference(
+                    title = "Widget Depth",
+                    value = widgetDepth,
+                    valueRange = 0.0f..1.0f,
+                    onValueChange = { 
+                        widgetDepth = it
+                        prefs.edit().putFloat("pref_widget_depth", it).apply() 
                     }
                 )
             }
@@ -331,125 +373,39 @@ fun SettingsScreen(
                 )
             }
             item {
-                SliderPreference(
-                    title = "Widget Blur Strength",
-                    value = widgetBlur,
-                    valueRange = 0.0f..25.0f,
-                    onValueChange = { 
-                        widgetBlur = it
-                        prefs.edit().putFloat("pref_widget_blur", it).apply() 
-                    }
-                )
+                Surface(
+                    onClick = { showAnimationDialog = true },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Widget Animation", fontWeight = FontWeight.SemiBold) },
+                        supportingContent = { Text(widgetAnimation) }
+                    )
+                }
             }
             item {
-                SliderPreference(
-                    title = "Glass Transparency",
-                    value = glassTransparency,
-                    valueRange = 0.0f..1.0f,
-                    onValueChange = { 
-                        glassTransparency = it
-                        prefs.edit().putFloat("pref_glass_transparency", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Background Tint Intensity",
-                    value = tintIntensity,
-                    valueRange = 0.0f..1.0f,
-                    onValueChange = { 
-                        tintIntensity = it
-                        prefs.edit().putFloat("pref_tint_intensity", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Border Thickness",
-                    value = borderThickness,
-                    valueRange = 0.0f..5.0f,
-                    onValueChange = { 
-                        borderThickness = it
-                        prefs.edit().putFloat("pref_border_thickness", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Border Opacity",
-                    value = borderOpacity,
-                    valueRange = 0.0f..1.0f,
-                    onValueChange = { 
-                        borderOpacity = it
-                        prefs.edit().putFloat("pref_border_opacity", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Shadow Intensity",
-                    value = shadowIntensity,
-                    valueRange = 0.0f..1.0f,
-                    onValueChange = { 
-                        shadowIntensity = it
-                        prefs.edit().putFloat("pref_shadow_intensity", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Icon Size",
-                    value = widgetIconSize,
-                    valueRange = 12f..48f,
-                    onValueChange = { 
-                        widgetIconSize = it
-                        prefs.edit().putFloat("pref_widget_icon_size", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Font Scale",
-                    value = widgetFontScale,
-                    valueRange = 0.5f..2.0f,
-                    onValueChange = { 
-                        widgetFontScale = it
-                        prefs.edit().putFloat("pref_widget_font_scale", it).apply() 
-                    }
-                )
-            }
-            item {
-                SliderPreference(
-                    title = "Progress Ring Thickness",
-                    value = progressThickness,
-                    valueRange = 1.0f..10.0f,
-                    onValueChange = { 
-                        progressThickness = it
-                        prefs.edit().putFloat("pref_progress_thickness", it).apply() 
-                    }
-                )
-            }
-            item {
-                SwitchPreference(
-                    title = "Compact Mode",
-                    subtitle = "Reduces padding and margins",
-                    checked = widgetCompact,
-                    onCheckedChange = { 
-                        widgetCompact = it
-                        prefs.edit().putBoolean("pref_widget_compact", it).apply() 
-                    }
-                )
-            }
-            item {
-                SwitchPreference(
-                    title = "AMOLED Widget Mode",
-                    subtitle = "Pure black background for widgets",
-                    checked = amoledWidget,
-                    onCheckedChange = { 
-                        amoledWidget = it
-                        prefs.edit().putBoolean("pref_amoled_widget", it).apply()
-                    }
-                )
+                TextButton(
+                    onClick = {
+                        widgetStyle = "Material 3"
+                        widgetCornerRadius = 24f
+                        widgetScale = 1.0f
+                        widgetDepth = 0.5f
+                        widgetOpacity = 1.0f
+                        widgetAnimation = "Smooth"
+                        prefs.edit()
+                            .putString("pref_widget_style", widgetStyle)
+                            .putFloat("pref_widget_corner_radius", widgetCornerRadius)
+                            .putFloat("pref_widget_scale", widgetScale)
+                            .putFloat("pref_widget_depth", widgetDepth)
+                            .putFloat("pref_widget_opacity", widgetOpacity)
+                            .putString("pref_widget_animation", widgetAnimation)
+                            .apply()
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    Text("Restore Defaults")
+                }
             }
 
             item { SettingsHeader("Data & Backup") }
@@ -563,6 +519,119 @@ fun SettingsScreen(
             },
             shape = RoundedCornerShape(cornerRadius.dp)
         )
+    }
+
+    if (showStyleDialog) {
+        AlertDialog(
+            onDismissRequest = { showStyleDialog = false },
+            title = { Text("Widget Style", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    listOf("Material 3", "Glass", "Glass+", "AMOLED", "Minimal").forEach { style ->
+                        Surface(
+                            onClick = {
+                                widgetStyle = style
+                                prefs.edit().putString("pref_widget_style", style).apply()
+                                showStyleDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = widgetStyle == style, onClick = null)
+                                Spacer(Modifier.width(12.dp))
+                                Text(style)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { showStyleDialog = false }) { Text("Cancel") } },
+            shape = RoundedCornerShape(cornerRadius.dp)
+        )
+    }
+
+    if (showAnimationDialog) {
+        AlertDialog(
+            onDismissRequest = { showAnimationDialog = false },
+            title = { Text("Widget Animation", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    listOf("Off", "Smooth", "Premium").forEach { animation ->
+                        Surface(
+                            onClick = {
+                                widgetAnimation = animation
+                                prefs.edit().putString("pref_widget_animation", animation).apply()
+                                showAnimationDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = widgetAnimation == animation, onClick = null)
+                                Spacer(Modifier.width(12.dp))
+                                Text(animation)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { showAnimationDialog = false }) { Text("Cancel") } },
+            shape = RoundedCornerShape(cornerRadius.dp)
+        )
+    }
+}
+
+@Composable
+fun WidgetPreview(
+    style: String,
+    cornerRadius: Float,
+    scale: Float,
+    depth: Float,
+    opacity: Float
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = androidx.compose.ui.Alignment.Center
+    ) {
+        val backgroundColor = when (style) {
+            "AMOLED" -> androidx.compose.ui.graphics.Color.Black
+            "Minimal" -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            "Glass", "Glass+" -> MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
+            else -> MaterialTheme.colorScheme.primaryContainer
+        }
+        
+        Card(
+            modifier = Modifier
+                .width(200.dp * scale)
+                .height(120.dp * scale),
+            shape = RoundedCornerShape(cornerRadius.dp),
+            colors = CardDefaults.cardColors(containerColor = backgroundColor.copy(alpha = backgroundColor.alpha * opacity)),
+            elevation = CardDefaults.cardElevation(defaultElevation = (depth * 8).dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp * scale),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Session Name", style = MaterialTheme.typography.labelSmall, fontSize = (12 * scale).sp)
+                Text("33", style = MaterialTheme.typography.displayMedium, fontSize = (32 * scale).sp, color = if (style == "AMOLED") androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.primary)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Box(Modifier.size(32.dp * scale).background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp * scale)), contentAlignment = androidx.compose.ui.Alignment.Center) { Text("-") }
+                    Box(Modifier.size(32.dp * scale).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp * scale)), contentAlignment = androidx.compose.ui.Alignment.Center) { Text("+", color = MaterialTheme.colorScheme.onPrimary) }
+                }
+            }
+        }
     }
 }
 

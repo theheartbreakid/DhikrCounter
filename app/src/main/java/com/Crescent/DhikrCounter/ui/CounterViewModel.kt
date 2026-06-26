@@ -16,6 +16,7 @@ import com.Crescent.DhikrCounter.data.GlobalStats
 import com.Crescent.DhikrCounter.data.AchievementRepository
 import com.Crescent.DhikrCounter.utils.SettingsManager
 import com.Crescent.DhikrCounter.utils.SoundManager
+import com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -48,6 +49,9 @@ class CounterViewModel(
             "pref_allow_negative" -> isNegativeCountAllowed.postValue(p.getBoolean("pref_allow_negative", false))
             "pref_confirm_reset" -> isConfirmResetEnabled.postValue(p.getBoolean("pref_confirm_reset", true))
             "pref_corner_radius" -> cornerRadius.postValue(p.getFloat("pref_corner_radius", 24f))
+        }
+        if (key != null && key.startsWith("pref_widget_")) {
+            viewModelScope.launch { updateAllWidgets(getApplication()) }
         }
     }
 
@@ -169,6 +173,7 @@ class CounterViewModel(
     fun setActiveSessionId(id: Long) {
         settingsManager.activeSessionId = id
         activeSessionId.value = id
+        viewModelScope.launch { updateAllWidgets(getApplication()) }
     }
 
     fun increment() {
@@ -176,6 +181,7 @@ class CounterViewModel(
             viewModelScope.launch(Dispatchers.IO) {
                 repository.incrementCount(current.id, current.incrementValue)
                 historyRepository.logEvent(current.id, current.name, "INCREMENT", current.incrementValue)
+                updateAllWidgets(getApplication())
                 
                 val isGoalJustReached = current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount
                 if (isGoalJustReached) {
@@ -201,6 +207,7 @@ class CounterViewModel(
             viewModelScope.launch(Dispatchers.IO) {
                 repository.decrementCount(current.id, current.incrementValue, allowNegative)
                 historyRepository.logEvent(current.id, current.name, "DECREMENT", -current.incrementValue)
+                updateAllWidgets(getApplication())
                 launch(Dispatchers.Main) {
                     if (settingsManager.isHapticFeedbackEnabled) vibrateClickSoft()
                     soundManager.playSound(SoundManager.SoundType.DECREMENT)
@@ -232,6 +239,7 @@ class CounterViewModel(
             viewModelScope.launch(Dispatchers.IO) {
                 repository.resetCount(current.id)
                 historyRepository.logEvent(current.id, current.name, "RESET", -current.count)
+                updateAllWidgets(getApplication())
                 launch(Dispatchers.Main) {
                     soundManager.playSound(SoundManager.SoundType.RESET)
                 }

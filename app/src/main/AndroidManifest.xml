@@ -48,62 +48,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/quick_counter_widget_info" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.widgets.CompactCounterWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/compact_counter_widget_info" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.widgets.DashboardWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/dashboard_widget_info" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.widgets.StatisticsWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/statistics_widget_info" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.widgets.MultiSessionWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/multi_session_widget_info" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.widgets.GoalProgressWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/goal_progress_widget_info" />
+                android:resource="@xml/counter_widget_info" />
         </receiver>
 
         <receiver
@@ -115,17 +60,6 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/motivation_widget_info" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.widgets.AmoledWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/amoled_widget_info" />
         </receiver>
 
         <service

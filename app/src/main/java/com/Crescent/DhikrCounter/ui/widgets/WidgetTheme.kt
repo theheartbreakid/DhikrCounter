@@ -22,18 +22,18 @@ fun GlanceModifier.applyWidgetStyle(context: Context): GlanceModifier {
     
     val radius = sm.getWidgetCornerRadius()
     val opacity = sm.getWidgetOpacity()
-    val isAmoled = sm.isAmoledWidgetEnabled()
-    val isCompact = sm.isWidgetCompactMode()
-    val tintIntensity = sm.getBackgroundTintIntensity()
+    val style = sm.getWidgetStyle()
+    val scale = sm.getWidgetScale()
     
-    val baseColor = if (isAmoled) Color.Black else GlanceTheme.colors.surface.getColor(context)
+    val baseColor = if (style == "AMOLED") Color.Black else GlanceTheme.colors.surface.getColor(context)
     val tintColor = GlanceTheme.colors.primary.getColor(context)
+    val tintIntensity = sm.getBackgroundTintIntensity()
     
     val blendedColor = Color(
         red = (baseColor.red * (1 - tintIntensity) + tintColor.red * tintIntensity).coerceIn(0f, 1f),
         green = (baseColor.green * (1 - tintIntensity) + tintColor.green * tintIntensity).coerceIn(0f, 1f),
         blue = (baseColor.blue * (1 - tintIntensity) + tintColor.blue * tintIntensity).coerceIn(0f, 1f),
-        alpha = opacity
+        alpha = opacity * sm.getGlassTransparency()
     )
 
     var modifier = this
@@ -41,11 +41,8 @@ fun GlanceModifier.applyWidgetStyle(context: Context): GlanceModifier {
         .cornerRadius(radius.dp)
         .appWidgetBackground()
     
-    if (isCompact) {
-        modifier = modifier.padding(6.dp)
-    } else {
-        modifier = modifier.padding(12.dp)
-    }
+    val padding = (12 * scale).dp
+    modifier = modifier.padding(padding)
     
     return modifier
 }
@@ -53,13 +50,14 @@ fun GlanceModifier.applyWidgetStyle(context: Context): GlanceModifier {
 @Composable
 fun getWidgetPadding(context: Context): Dp {
     val app = context.applicationContext as DhikrApplication
-    return if (app.settingsManager.isWidgetCompactMode()) 4.dp else 8.dp
+    val scale = app.settingsManager.getWidgetScale()
+    return (8 * scale).dp
 }
 
 @Composable
 fun getWidgetFontSize(context: Context, baseSize: Float): TextUnit {
     val app = context.applicationContext as DhikrApplication
-    val scale = app.settingsManager.getWidgetFontScale()
+    val scale = app.settingsManager.getWidgetScale()
     return (baseSize * scale).sp
 }
 

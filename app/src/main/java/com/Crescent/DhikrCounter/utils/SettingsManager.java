@@ -20,19 +20,56 @@ public class SettingsManager {
     public float getCornerRadius() { return prefs.getFloat("pref_corner_radius", 24f); }
 
     // Widget Appearance
+    public String getWidgetStyle() { return prefs.getString("pref_widget_style", "Material 3"); }
     public float getWidgetCornerRadius() { return prefs.getFloat("pref_widget_corner_radius", getCornerRadius()); }
-    public float getWidgetOpacity() { return prefs.getFloat("pref_widget_opacity", 0.9f); }
-    public float getWidgetBlurStrength() { return prefs.getFloat("pref_widget_blur", 0f); }
-    public float getGlassTransparency() { return prefs.getFloat("pref_glass_transparency", 0.1f); }
-    public float getBackgroundTintIntensity() { return prefs.getFloat("pref_tint_intensity", 0.2f); }
-    public float getBorderThickness() { return prefs.getFloat("pref_border_thickness", 1.0f); }
-    public float getBorderOpacity() { return prefs.getFloat("pref_border_opacity", 0.5f); }
-    public float getShadowIntensity() { return prefs.getFloat("pref_shadow_intensity", 0.0f); }
-    public float getWidgetIconSize() { return prefs.getFloat("pref_widget_icon_size", 24f); }
-    public float getWidgetFontScale() { return prefs.getFloat("pref_widget_font_scale", 1.0f); }
-    public float getProgressRingThickness() { return prefs.getFloat("pref_progress_thickness", 4.0f); }
-    public boolean isWidgetCompactMode() { return prefs.getBoolean("pref_widget_compact", false); }
-    public boolean isAmoledWidgetEnabled() { return prefs.getBoolean("pref_amoled_widget", false); }
+    public float getWidgetScale() { return prefs.getFloat("pref_widget_scale", 1.0f); }
+    public float getWidgetDepth() { return prefs.getFloat("pref_widget_depth", 0.5f); }
+    public float getWidgetOpacity() { return prefs.getFloat("pref_widget_opacity", 1.0f); }
+    public String getWidgetAnimation() { return prefs.getString("pref_widget_animation", "Smooth"); }
+
+    // Derived Widget Properties (for backward compatibility if needed, or to be removed later)
+    public float getWidgetBlurStrength() {
+        String style = getWidgetStyle();
+        float depth = getWidgetDepth();
+        if (style.equals("Glass")) return 15f * depth;
+        if (style.equals("Glass+")) return 25f * depth;
+        return 0f;
+    }
+
+    public float getGlassTransparency() {
+        String style = getWidgetStyle();
+        if (style.startsWith("Glass")) return 0.4f;
+        return 1.0f;
+    }
+
+    public float getBackgroundTintIntensity() {
+        String style = getWidgetStyle();
+        if (style.equals("Minimal")) return 0.05f;
+        if (style.equals("AMOLED")) return 0f;
+        return 0.2f;
+    }
+
+    public float getBorderThickness() {
+        String style = getWidgetStyle();
+        if (style.startsWith("Glass")) return 1.0f * getWidgetDepth();
+        return 0f;
+    }
+
+    public float getBorderOpacity() {
+        String style = getWidgetStyle();
+        if (style.startsWith("Glass")) return 0.5f * getWidgetDepth();
+        return 0f;
+    }
+
+    public float getShadowIntensity() {
+        return getWidgetDepth() * 0.5f;
+    }
+
+    public float getWidgetIconSize() { return 24f * getWidgetScale(); }
+    public float getWidgetFontScale() { return getWidgetScale(); }
+    public float getProgressRingThickness() { return 4.0f * getWidgetScale(); }
+    public boolean isWidgetCompactMode() { return false; } // Handled by scale now
+    public boolean isAmoledWidgetEnabled() { return getWidgetStyle().equals("AMOLED"); }
 
     // Counter Settings
     public boolean isCountAnimationEnabled() { return prefs.getBoolean("pref_count_animation", true); }

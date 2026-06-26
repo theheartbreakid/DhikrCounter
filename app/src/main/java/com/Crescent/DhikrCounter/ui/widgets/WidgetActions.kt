@@ -19,8 +19,6 @@ class IncrementAction : ActionCallback {
             if (session != null) {
                 app.sessionRepository.incrementCount(sessionId, session.incrementValue)
                 app.historyRepository.logEvent(sessionId, session.name, "INCREMENT", session.incrementValue)
-                
-                // Update all widgets
                 updateAllWidgets(context)
             }
         }
@@ -38,11 +36,43 @@ class DecrementAction : ActionCallback {
             if (session != null) {
                 app.sessionRepository.decrementCount(sessionId, session.decrementValue, allowNegative)
                 app.historyRepository.logEvent(sessionId, session.name, "DECREMENT", -session.decrementValue)
-                
-                // Update all widgets
                 updateAllWidgets(context)
             }
         }
+    }
+}
+
+class ResetAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val app = context.applicationContext as DhikrApplication
+        val sessionId = parameters[SessionIdKey] ?: app.settingsManager.activeSessionId
+        
+        if (sessionId != -1L) {
+            val session = app.sessionRepository.getSession(sessionId)
+            if (session != null) {
+                app.sessionRepository.resetCount(sessionId)
+                app.historyRepository.logEvent(sessionId, session.name, "RESET", 0)
+                updateAllWidgets(context)
+            }
+        }
+    }
+}
+
+class SwitchSessionAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val app = context.applicationContext as DhikrApplication
+        val sessionId = parameters[SessionIdKey] ?: return
+        app.settingsManager.setActiveSessionId(sessionId)
+        updateAllWidgets(context)
+    }
+}
+
+class ToggleFloatingAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val app = context.applicationContext as DhikrApplication
+        val currentState = app.settingsManager.isFloatingBubbleEnabled()
+        app.settingsManager.getPrefs().edit().putBoolean("pref_floating_enabled", !currentState).apply()
+        updateAllWidgets(context)
     }
 }
 
@@ -59,11 +89,5 @@ val SessionIdKey = ActionParameters.Key<Long>("sessionId")
 
 suspend fun updateAllWidgets(context: Context) {
     CounterWidget().updateAll(context)
-    CompactCounterWidget().updateAll(context)
-    DashboardWidget().updateAll(context)
-    StatisticsWidget().updateAll(context)
-    MultiSessionWidget().updateAll(context)
-    GoalProgressWidget().updateAll(context)
     MotivationWidget().updateAll(context)
-    AmoledWidget().updateAll(context)
 }

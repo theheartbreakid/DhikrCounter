@@ -1,0 +1,62 @@
+package com.Crescent.DhikrCounter.data
+
+object QuotesProvider {
+    val quotes = listOf(
+        "Verily, in the remembrance of Allah do hearts find rest.",
+        "The best dhikr is 'La ilaha illAllah'.",
+        "Keep your tongue moist with the remembrance of Allah.",
+        "Allah is with those who remember Him.",
+        "Success is found in consistency.",
+        "Every count is a step closer to peace.",
+        "Start your day with gratitude and Dhikr.",
+        "SubhanAllah - Glory be to Allah.",
+        "Alhamdulillah - All praise is due to Allah.",
+        "Allahu Akbar - Allah is the Greatest.",
+        "La hawla wa la quwwata illa billah - There is no power or might except with Allah.",
+        "Astaghfirullah - I seek forgiveness from Allah.",
+        "The most beloved of speech to Allah are four: SubhanAllah, Alhamdulillah, La ilaha illAllah, and Allahu Akbar.",
+        "Remembrance of Allah is the greatest deed.",
+        "He who remembers Allah, Allah remembers him.",
+        "Dhikr is the polish of the heart.",
+        "A heart without dhikr is like a fish out of water.",
+        "The likeness of the one who remembers his Lord and the one who does not is like that of the living and the dead.",
+        "Sufficient for us is Allah, and [He is] the best Disposer of affairs.",
+        "My success is only by Allah.",
+        "And whoever relies upon Allah - then He is sufficient for him.",
+        "Allah does not burden a soul beyond that it can bear.",
+        "So verily, with the hardship, there is ease.",
+        "Indeed, Allah is with the patient.",
+        "Call upon Me; I will respond to you.",
+        "And He found you lost and guided [you].",
+        "The best among you are those who have the best manners and character.",
+        "Purity is half of faith.",
+        "The most beloved of deeds to Allah are those that are most consistent, even if they are small.",
+        "Modesty is part of faith.",
+        "Kindness is a mark of faith, and whoever is not kind has no faith.",
+        "Be in this world as if you were a stranger or a traveler.",
+        "The strong man is not the good wrestler; the strong man is only the one who controls himself when he is angry.",
+        "None of you truly believes until he loves for his brother what he loves for himself.",
+        "A good word is charity.",
+        "Every act of goodness is charity.",
+        "The best of you are those who learn the Quran and teach it.",
+        "Faith is to believe in Allah, His angels, His books, His messengers, the Last Day, and to believe in providence, its good and its harm.",
+        "The five daily prayers are an expiation for what is between them.",
+        "Whoever follows a path in pursuit of knowledge, Allah will make easy for him a path to Paradise.",
+        "The world is a prison for the believer and a paradise for the disbeliever.",
+        "Take benefit of five before five: your youth before your old age, your health before your sickness, your wealth before your poverty, your free time before your preoccupation, and your life before your death.",
+        "Allah is Beautiful and He loves beauty.",
+        "Richness is not having many possessions, but richness is being content with oneself.",
+        "The upper hand is better than the lower hand.",
+        "The key to Paradise is prayer.",
+        "Charity does not decrease wealth.",
+        "Allah will help His servant as long as the servant helps his brother.",
+        "The best of people are those that bring most benefit to the rest of mankind.",
+        "Be mindful of Allah and Allah will protect you.",
+        "If you ask, ask Allah; if you seek help, seek help from Allah.",
+        "Know that victory comes with patience, relief with affliction, and ease with hardship."
+    )
+    
+    fun getRandomQuote(seed: Long): String {
+        return quotes[(seed % quotes.size).toInt()]
+    }
+}
