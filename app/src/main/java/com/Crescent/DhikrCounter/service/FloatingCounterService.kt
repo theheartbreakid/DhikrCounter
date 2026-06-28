@@ -29,6 +29,23 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
@@ -42,6 +59,8 @@ import com.Crescent.DhikrCounter.data.HistoryRepository
 import com.Crescent.DhikrCounter.utils.SettingsManager
 import com.Crescent.DhikrCounter.utils.SoundManager
 import com.Crescent.DhikrCounter.ui.widgets.updateAllWidgets
+import com.Crescent.DhikrCounter.ui.theme.DhikrTheme
+import com.Crescent.DhikrCounter.ui.components.ProgressRing
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -206,6 +225,24 @@ class FloatingCounterService : LifecycleService() {
 
         wm.addView(view, lp)
         isViewAttached = true
+
+        val composeView = view.findViewById<ComposeView>(R.id.compose_view_bubble)
+        composeView.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val sm = settingsManager ?: return@setContent
+                val amoled = sm.prefs.getBoolean("pref_amoled_mode", false)
+                DhikrTheme(amoledMode = amoled) {
+                    val sessionId = sm.activeSessionId
+                    val session by repository!!.getSessionFlow(sessionId).collectAsState(initial = activeSession)
+                    val count = session?.count ?: 0L
+                    val goal = session?.goalCount ?: 0L
+                    val progress = if (goal > 0) (count.toFloat() / goal).coerceIn(0f, 1f) else 0f
+                    
+                    FloatingBubbleContent(count, progress)
+                }
+            }
+        }
 
         updateFloatingViewSize()
         updateAdaptiveColors()
@@ -381,13 +418,9 @@ class FloatingCounterService : LifecycleService() {
         val view = floatingView ?: return
         val sm = settingsManager ?: return
         val bubble = view.findViewById<MaterialCardView>(R.id.floating_bubble)
-        val textCount = view.findViewById<TextView>(R.id.text_floating_count)
         
         val sizeVal = sm.bubbleSize.let { if (it < 40) 64 else it }
         val bubbleSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, sizeVal.toFloat(), resources.displayMetrics).toInt()
-        
-        // Scale factor relative to default size (64dp)
-        val scaleFactor = sizeVal.toFloat() / 64f
         
         val bubbleParams = bubble.layoutParams as FrameLayout.LayoutParams
         bubbleParams.width = bubbleSizePx
@@ -402,9 +435,8 @@ class FloatingCounterService : LifecycleService() {
         bubble.radius = bubbleSizePx / 2f
         bubble.alpha = sm.bubbleOpacity.coerceAtLeast(0.3f)
         
-        // Scale border and text size proportionally
-        bubble.strokeWidth = (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2.2f, resources.displayMetrics) * scaleFactor).toInt()
-        textCount.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f * scaleFactor)
+        // Orbit cards scaling...
+        val scaleFactor = sizeVal.toFloat() / 64f
 
         val orbitSize = (bubbleSizePx * 0.35f).toInt()
         val orbitIconPadding = (orbitSize * 0.18f).toInt()
@@ -432,16 +464,9 @@ class FloatingCounterService : LifecycleService() {
         val view = floatingView ?: return
         val isDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         
-        val bubble = view.findViewById<MaterialCardView>(R.id.floating_bubble)
-        val textCount = view.findViewById<TextView>(R.id.text_floating_count)
-        
         val orbitCards = arrayOf(R.id.btn_floating_decrease_card, R.id.btn_floating_reset_card, R.id.btn_floating_open_app_card)
         
         if (isDark) {
-            bubble.setCardBackgroundColor(ContextCompat.getColor(this, R.color.md_theme_light_primaryContainer))
-            bubble.strokeColor = ContextCompat.getColor(this, R.color.md_theme_light_primary)
-            textCount.setTextColor(ContextCompat.getColor(this, R.color.md_theme_light_onPrimaryContainer))
-            
             orbitCards.forEach { id ->
                 val card = view.findViewById<MaterialCardView>(id)
                 card.setCardBackgroundColor(Color.parseColor("#EEF0F0F0"))
@@ -452,10 +477,6 @@ class FloatingCounterService : LifecycleService() {
                 btn?.imageTintList = ColorStateList.valueOf(Color.BLACK)
             }
         } else {
-            bubble.setCardBackgroundColor(ContextCompat.getColor(this, R.color.md_theme_dark_primaryContainer))
-            bubble.strokeColor = ContextCompat.getColor(this, R.color.md_theme_dark_primary)
-            textCount.setTextColor(ContextCompat.getColor(this, R.color.md_theme_dark_onPrimaryContainer))
-            
             orbitCards.forEach { id ->
                 val card = view.findViewById<MaterialCardView>(id)
                 card.setCardBackgroundColor(Color.parseColor("#EE1A1C1E"))
@@ -742,7 +763,6 @@ class FloatingCounterService : LifecycleService() {
     }
 
     private fun observeActiveSession() {
-        val view = floatingView ?: return
         val repo = repository ?: return
         val sm = settingsManager ?: return
         
@@ -751,14 +771,38 @@ class FloatingCounterService : LifecycleService() {
             val sessionId = sm.activeSessionId
             repo.getSessionFlow(sessionId).collectLatest { session ->
                 activeSession = session
-                session?.let {
-                    val textCount = view.findViewById<TextView>(R.id.text_floating_count)
-                    textCount.text = it.count.toString()
-                    textCount.animate().scaleX(1.25f).scaleY(1.25f).setDuration(120).withEndAction {
-                        textCount.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
-                    }.start()
+            }
+        }
+    }
+
+    @Composable
+    private fun FloatingBubbleContent(count: Long, progress: Float) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            // Main Bubble background
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.fillMaxSize().padding(6.dp),
+                tonalElevation = 6.dp,
+                shadowElevation = 2.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = count.toString(),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontSize = 20.sp
+                    )
                 }
             }
+            
+            // The Wavy Ring
+            ProgressRing(
+                progress = progress,
+                modifier = Modifier.fillMaxSize(),
+                strokeWidth = 6.dp
+            )
         }
     }
 

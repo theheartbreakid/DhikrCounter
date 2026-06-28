@@ -15,6 +15,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -297,7 +300,7 @@ fun CounterScreen(
                             ProgressRing(
                                 progress = progress,
                                 modifier = Modifier.size(320.dp),
-                                strokeWidth = 32f
+                                strokeWidth = 16.dp
                             )
 
                             // Inner Box ensures all center content uses the exact same center anchor
@@ -574,6 +577,7 @@ fun SessionHeader(session: SessionEntity, cornerRadius: Float, onEditClick: () -
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SessionProgressDetails(session: SessionEntity, cornerRadius: Float) {
     Column(
@@ -581,8 +585,16 @@ fun SessionProgressDetails(session: SessionEntity, cornerRadius: Float) {
             .fillMaxWidth()
             .padding(horizontal = 32.dp, vertical = 16.dp)
     ) {
-        val progress = (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
+        val progress = if (session.goalCount > 0) {
+            (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
+        } else 0f
+        
         val percent = (progress * 100).toInt()
+        val animatedProgress by animateFloatAsState(
+            targetValue = progress,
+            animationSpec = WavyProgressIndicatorDefaults.ProgressAnimationSpec,
+            label = "LinearProgressAnimation"
+        )
         
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -603,15 +615,22 @@ fun SessionProgressDetails(session: SessionEntity, cornerRadius: Float) {
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
-        LinearProgressIndicator(
-            progress = { progress },
+        LinearWavyProgressIndicator(
+            progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(12.dp)
                 .clip(RoundedCornerShape(cornerRadius.dp / 2)),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeCap = StrokeCap.Round
+            amplitude = { p ->
+                when {
+                    p >= 0.99f -> 0f
+                    p > 0.8f -> 0.4f
+                    p > 0.4f -> 1.0f
+                    else -> 0.3f
+                }
+            }
         )
     }
 }

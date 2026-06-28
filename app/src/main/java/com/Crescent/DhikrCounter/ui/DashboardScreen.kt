@@ -1,5 +1,6 @@
 package com.Crescent.DhikrCounter.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,8 +31,10 @@ import com.patrykandpatrick.vico.compose.chart.column.columnChart
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 
 import androidx.compose.runtime.livedata.observeAsState
+import com.Crescent.DhikrCounter.ui.components.ProgressRing
 import com.Crescent.DhikrCounter.data.SessionStats
 import com.Crescent.DhikrCounter.data.GlobalStats
+import com.Crescent.DhikrCounter.data.SessionEntity
 import java.text.SimpleDateFormat
 import java.util.*
 import com.patrykandpatrick.vico.core.entry.FloatEntry
@@ -104,7 +110,7 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (selectedTabIndex == 0) {
-                DashboardContent(cornerRadius, globalStats, sessionComparison)
+                DashboardContent(cornerRadius, globalStats, sessionComparison, activeSession)
             } else {
                 StatisticsContent(cornerRadius, sessionStats, dailyActivity, dailyActivity30, activeSession?.name ?: "Select a Session")
             }
@@ -113,7 +119,7 @@ fun DashboardScreen(
 }
 
 @Composable
-fun DashboardContent(cornerRadius: Float, globalStats: GlobalStats, sessionComparison: List<Pair<String, Long>>) {
+fun DashboardContent(cornerRadius: Float, globalStats: GlobalStats, sessionComparison: List<Pair<String, Long>>, activeSession: SessionEntity?) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -125,6 +131,22 @@ fun DashboardContent(cornerRadius: Float, globalStats: GlobalStats, sessionCompa
         }
 
         item {
+            activeSession?.let { session ->
+                if (session.goalCount > 0) {
+                    val progress = (session.count.toFloat() / session.goalCount).coerceIn(0f, 1f)
+                    StatCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = "Active Goal: ${session.name}",
+                        value = "${(progress * 100).toInt()}% completed",
+                        icon = Icons.Outlined.TrackChanges,
+                        color = MaterialTheme.colorScheme.primary,
+                        cornerRadius = cornerRadius,
+                        progress = progress
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
             // Stats Grid
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -188,11 +210,17 @@ fun DashboardContent(cornerRadius: Float, globalStats: GlobalStats, sessionCompa
                                     Text(String.format(Locale.getDefault(), "%, d", count), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                LinearProgressIndicator(
-                                    progress = { count.toFloat() / maxCount },
+                                val animatedProgress by animateFloatAsState(
+                                    targetValue = (count.toFloat() / maxCount).coerceIn(0f, 1f),
+                                    animationSpec = WavyProgressIndicatorDefaults.ProgressAnimationSpec,
+                                    label = "DashboardLinearProgress"
+                                )
+                                LinearWavyProgressIndicator(
+                                    progress = { animatedProgress },
                                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
                                     color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    amplitude = { p -> if (p >= 0.99f) 0f else 0.6f }
                                 )
                             }
                         }
@@ -330,7 +358,15 @@ fun MiniStatCard(modifier: Modifier = Modifier, title: String, value: String, ic
 }
 
 @Composable
-fun StatCard(modifier: Modifier = Modifier, title: String, value: String, icon: ImageVector, color: Color, cornerRadius: Float) {
+fun StatCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    icon: ImageVector,
+    color: Color,
+    cornerRadius: Float,
+    progress: Float? = null
+) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(cornerRadius.dp),
@@ -338,7 +374,21 @@ fun StatCard(modifier: Modifier = Modifier, title: String, value: String, icon: 
         tonalElevation = 2.dp
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
+                if (progress != null) {
+                    ProgressRing(
+                        progress = progress,
+                        modifier = Modifier.size(32.dp),
+                        strokeWidth = 4.dp,
+                        color = color
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(12.dp))
             Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
