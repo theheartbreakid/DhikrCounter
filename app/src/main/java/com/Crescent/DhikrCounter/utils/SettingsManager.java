@@ -18,6 +18,7 @@ public class SettingsManager {
 
     // UI Customization
     public float getCornerRadius() { return prefs.getFloat("pref_corner_radius", 24f); }
+    public boolean isWavyProgressEnabled() { return prefs.getBoolean("pref_wavy_progress", false); }
 
     // Widget Appearance
     public String getWidgetStyle() { return prefs.getString("pref_widget_style", "Material 3"); }

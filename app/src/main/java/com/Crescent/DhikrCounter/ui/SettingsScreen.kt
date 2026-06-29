@@ -65,6 +65,7 @@ fun SettingsScreen(
     
     // UI Customization
     var cornerRadius by remember { mutableStateOf(settingsManager.cornerRadius) }
+    var wavyProgress by remember { mutableStateOf(settingsManager.isWavyProgressEnabled) }
 
     // Counter Settings
     var countAnimation by remember { mutableStateOf(settingsManager.isCountAnimationEnabled) }
@@ -192,6 +193,17 @@ fun SettingsScreen(
                     onValueChange = { 
                         cornerRadius = it
                         prefs.edit().putFloat("pref_corner_radius", it).apply() 
+                    }
+                )
+            }
+            item {
+                SwitchPreference(
+                    title = "Wavy Progress Bars",
+                    subtitle = "Use Material 3 Expressive wavy progress indicators",
+                    checked = wavyProgress,
+                    onCheckedChange = { 
+                        wavyProgress = it
+                        prefs.edit().putBoolean("pref_wavy_progress", it).apply()
                     }
                 )
             }

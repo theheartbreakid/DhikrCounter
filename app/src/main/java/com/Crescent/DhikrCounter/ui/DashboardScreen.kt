@@ -16,10 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.Crescent.DhikrCounter.DhikrApplication
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
@@ -188,18 +192,44 @@ fun DashboardContent(cornerRadius: Float, globalStats: GlobalStats, sessionCompa
                                     Text(String.format(Locale.getDefault(), "%, d", count), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
-                                LinearProgressIndicator(
-                                    progress = { count.toFloat() / maxCount },
-                                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                )
+                                ProgressIndicatorWrapper(count.toFloat() / maxCount)
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ProgressIndicatorWrapper(progressValue: Float) {
+    val context = LocalContext.current
+    val settingsManager = (context.applicationContext as DhikrApplication).settingsManager
+    val isWavyEnabled = settingsManager.isWavyProgressEnabled
+
+    if (isWavyEnabled) {
+        LinearWavyProgressIndicator(
+            progress = { progressValue },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(14.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+            stroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round),
+            trackStroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round)
+        )
+    } else {
+        LinearProgressIndicator(
+            progress = { progressValue },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+        )
     }
 }
 

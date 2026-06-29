@@ -39,6 +39,7 @@ class CounterViewModel(
     val isCountAnimationEnabled = MutableLiveData<Boolean>()
     val isNegativeCountAllowed = MutableLiveData<Boolean>()
     val isConfirmResetEnabled = MutableLiveData<Boolean>()
+    val isWavyProgressEnabled = MutableLiveData<Boolean>()
     val showResetConfirmation = MutableLiveData<Boolean>().apply { value = false }
     val cornerRadius = MutableLiveData<Float>()
     
@@ -48,6 +49,7 @@ class CounterViewModel(
             "pref_count_animation" -> isCountAnimationEnabled.postValue(p.getBoolean("pref_count_animation", true))
             "pref_allow_negative" -> isNegativeCountAllowed.postValue(p.getBoolean("pref_allow_negative", false))
             "pref_confirm_reset" -> isConfirmResetEnabled.postValue(p.getBoolean("pref_confirm_reset", true))
+            "pref_wavy_progress" -> isWavyProgressEnabled.postValue(p.getBoolean("pref_wavy_progress", false))
             "pref_corner_radius" -> cornerRadius.postValue(p.getFloat("pref_corner_radius", 24f))
             "active_session_id" -> {
                 val newId = p.getLong("active_session_id", -1L)
@@ -83,6 +85,7 @@ class CounterViewModel(
         isCountAnimationEnabled.value = settingsManager.isCountAnimationEnabled
         isNegativeCountAllowed.value = settingsManager.isNegativeCountAllowed
         isConfirmResetEnabled.value = settingsManager.isConfirmBeforeReset
+        isWavyProgressEnabled.value = settingsManager.isWavyProgressEnabled
         cornerRadius.value = settingsManager.cornerRadius
         
         if (activeSessionId.value == null) {

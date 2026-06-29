@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +33,7 @@ import com.Crescent.DhikrCounter.ui.components.AnimatedCounter
 import com.Crescent.DhikrCounter.ui.components.ProgressRing
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CounterScreen(
     viewModel: CounterViewModel,
@@ -44,6 +45,7 @@ fun CounterScreen(
     val isFloatingEnabled by viewModel.isFloatingEnabled.observeAsState(false)
     val isAnimationEnabled by viewModel.isCountAnimationEnabled.observeAsState(true)
     val isConfirmResetEnabled by viewModel.isConfirmResetEnabled.observeAsState(true)
+    val isWavyProgressEnabled by viewModel.isWavyProgressEnabled.observeAsState(false)
     val cornerRadius by viewModel.cornerRadius.observeAsState(24f)
     val allSessions by viewModel.allSessions.observeAsState(emptyList())
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -294,11 +296,22 @@ fun CounterScreen(
                                 (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
                             } else 0f
 
-                            ProgressRing(
-                                progress = progress,
-                                modifier = Modifier.size(320.dp),
-                                strokeWidth = 32f
-                            )
+                            if (isWavyProgressEnabled && session.goalCount > 0) {
+                                CircularWavyProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.size(320.dp),
+                                    stroke = Stroke(width = 32f, cap = StrokeCap.Round),
+                                    trackStroke = Stroke(width = 32f, cap = StrokeCap.Round),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                )
+                            } else {
+                                ProgressRing(
+                                    progress = progress,
+                                    modifier = Modifier.size(320.dp),
+                                    strokeWidth = 32f
+                                )
+                            }
 
                             // Inner Box ensures all center content uses the exact same center anchor
                             Box(
@@ -574,8 +587,13 @@ fun SessionHeader(session: SessionEntity, cornerRadius: Float, onEditClick: () -
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SessionProgressDetails(session: SessionEntity, cornerRadius: Float) {
+    val context = LocalContext.current
+    val settingsManager = (context.applicationContext as com.Crescent.DhikrCounter.DhikrApplication).settingsManager
+    val isWavyEnabled = settingsManager.isWavyProgressEnabled
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -603,16 +621,30 @@ fun SessionProgressDetails(session: SessionEntity, cornerRadius: Float) {
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(12.dp)
-                .clip(RoundedCornerShape(cornerRadius.dp / 2)),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeCap = StrokeCap.Round
-        )
+        if (isWavyEnabled) {
+            LinearWavyProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                stroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { 12.dp.toPx() }, cap = StrokeCap.Round),
+                trackStroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { 12.dp.toPx() }, cap = StrokeCap.Round),
+                wavelength = 20.dp
+            )
+        } else {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(cornerRadius.dp / 2)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = StrokeCap.Round
+            )
+        }
     }
 }
 
