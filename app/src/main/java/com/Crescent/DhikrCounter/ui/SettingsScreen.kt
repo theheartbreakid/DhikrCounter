@@ -4,14 +4,19 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
@@ -66,6 +71,16 @@ fun SettingsScreen(
     // UI Customization
     var cornerRadius by remember { mutableStateOf(settingsManager.cornerRadius) }
     var wavyProgress by remember { mutableStateOf(settingsManager.isWavyProgressEnabled) }
+    var wavyThickness by remember { mutableStateOf(settingsManager.getWavyThickness()) }
+    var wavyAmplitude by remember { mutableStateOf(settingsManager.getWavyAmplitude()) }
+    var wavyWavelength by remember { mutableStateOf(settingsManager.getWavyWavelength()) }
+    var wavyGapSize by remember { mutableStateOf(settingsManager.getWavyGapSize()) }
+    var wavyWaveSpeed by remember { mutableStateOf(settingsManager.getWavyWaveSpeed()) }
+    var wavyColor by remember { mutableIntStateOf(settingsManager.getWavyColor()) }
+    var wavyTrackColor by remember { mutableIntStateOf(settingsManager.getWavyTrackColor()) }
+    
+    var showWavyColorDialog by remember { mutableStateOf(false) }
+    var showWavyTrackColorDialog by remember { mutableStateOf(false) }
 
     // Counter Settings
     var countAnimation by remember { mutableStateOf(settingsManager.isCountAnimationEnabled) }
@@ -206,6 +221,107 @@ fun SettingsScreen(
                         prefs.edit().putBoolean("pref_wavy_progress", it).apply()
                     }
                 )
+            }
+            if (wavyProgress) {
+                item {
+                    SliderPreference(
+                        title = "Wavy Thickness",
+                        value = wavyThickness,
+                        valueRange = 2f..24f,
+                        onValueChange = {
+                            wavyThickness = it
+                            prefs.edit().putFloat("pref_wavy_thickness", it).apply()
+                        }
+                    )
+                }
+                item {
+                    SliderPreference(
+                        title = "Wavy Amplitude",
+                        value = wavyAmplitude,
+                        valueRange = 0f..1f,
+                        onValueChange = {
+                            wavyAmplitude = it
+                            prefs.edit().putFloat("pref_wavy_amplitude", it).apply()
+                        }
+                    )
+                }
+                item {
+                    SliderPreference(
+                        title = "Wavy Wavelength",
+                        value = wavyWavelength,
+                        valueRange = 5f..100f,
+                        onValueChange = {
+                            wavyWavelength = it
+                            prefs.edit().putFloat("pref_wavy_wavelength", it).apply()
+                        }
+                    )
+                }
+                item {
+                    SliderPreference(
+                        title = "Wavy Gap Size",
+                        value = wavyGapSize,
+                        valueRange = 0f..20f,
+                        onValueChange = {
+                            wavyGapSize = it
+                            prefs.edit().putFloat("pref_wavy_gap_size", it).apply()
+                        }
+                    )
+                }
+                item {
+                    SliderPreference(
+                        title = "Wavy Wave Speed",
+                        value = wavyWaveSpeed,
+                        valueRange = 0f..100f,
+                        onValueChange = {
+                            wavyWaveSpeed = it
+                            prefs.edit().putFloat("pref_wavy_wave_speed", it).apply()
+                        }
+                    )
+                }
+                item {
+                    Surface(
+                        onClick = { showWavyColorDialog = true },
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        ListItem(
+                            headlineContent = { Text("Indicator Color", fontWeight = FontWeight.SemiBold) },
+                            supportingContent = { Text(if (wavyColor == 0) "Theme Primary" else "Custom Color") },
+                            trailingContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            if (wavyColor == 0) MaterialTheme.colorScheme.primary else Color(wavyColor),
+                                            RoundedCornerShape(4.dp)
+                                        )
+                                )
+                            }
+                        )
+                    }
+                }
+                item {
+                    Surface(
+                        onClick = { showWavyTrackColorDialog = true },
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        ListItem(
+                            headlineContent = { Text("Track Color", fontWeight = FontWeight.SemiBold) },
+                            supportingContent = { Text(if (wavyTrackColor == 0) "Theme Default" else "Custom Color") },
+                            trailingContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            if (wavyTrackColor == 0) MaterialTheme.colorScheme.surfaceVariant else Color(wavyTrackColor),
+                                            RoundedCornerShape(4.dp)
+                                        )
+                                )
+                            }
+                        )
+                    }
+                }
             }
 
             item { SettingsHeader("Counter") }
@@ -491,6 +607,32 @@ fun SettingsScreen(
         )
     }
 
+    if (showWavyColorDialog) {
+        ColorPickerDialog(
+            title = "Indicator Color",
+            onDismiss = { showWavyColorDialog = false },
+            onColorSelected = { 
+                wavyColor = it
+                prefs.edit().putInt("pref_wavy_color", it).apply()
+            },
+            currentColor = wavyColor,
+            cornerRadius = cornerRadius
+        )
+    }
+
+    if (showWavyTrackColorDialog) {
+        ColorPickerDialog(
+            title = "Track Color",
+            onDismiss = { showWavyTrackColorDialog = false },
+            onColorSelected = { 
+                wavyTrackColor = it
+                prefs.edit().putInt("pref_wavy_track_color", it).apply()
+            },
+            currentColor = wavyTrackColor,
+            cornerRadius = cornerRadius
+        )
+    }
+
     if (showThemeDialog) {
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
@@ -645,6 +787,91 @@ fun WidgetPreview(
             }
         }
     }
+}
+
+@Composable
+fun ColorPickerDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    onColorSelected: (Int) -> Unit,
+    currentColor: Int,
+    cornerRadius: Float
+) {
+    val colors = listOf(
+        0, // Theme default
+        0xFFF44336.toInt(), // Red
+        0xFFE91E63.toInt(), // Pink
+        0xFF9C27B0.toInt(), // Purple
+        0xFF673AB7.toInt(), // Deep Purple
+        0xFF3F51B5.toInt(), // Indigo
+        0xFF2196F3.toInt(), // Blue
+        0xFF03A9F4.toInt(), // Light Blue
+        0xFF00BCD4.toInt(), // Cyan
+        0xFF009688.toInt(), // Teal
+        0xFF4CAF50.toInt(), // Green
+        0xFF8BC34A.toInt(), // Light Green
+        0xFFCDDC39.toInt(), // Lime
+        0xFFFFEB3B.toInt(), // Yellow
+        0xFFFFC107.toInt(), // Amber
+        0xFFFF9800.toInt(), // Orange
+        0xFFFF5722.toInt(), // Deep Orange
+        0xFF795548.toInt(), // Brown
+        0xFF9E9E9E.toInt(), // Grey
+        0xFF607D8B.toInt()  // Blue Grey
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
+                    columns = androidx.compose.foundation.lazy.grid.GridCells.Adaptive(48.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.heightIn(max = 300.dp)
+                ) {
+                    items(colors.size) { index ->
+                        val colorInt = colors[index]
+                        val isSelected = currentColor == colorInt
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    if (colorInt == 0) MaterialTheme.colorScheme.outlineVariant else Color(colorInt),
+                                    CircleShape
+                                )
+                                .padding(if (colorInt == 0) 4.dp else 0.dp)
+                                .clickable {
+                                    onColorSelected(colorInt)
+                                    onDismiss()
+                                },
+                            contentAlignment = androidx.compose.ui.Alignment.Center
+                        ) {
+                            if (colorInt == 0) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Default", modifier = Modifier.size(20.dp).rotate(90f))
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = if (colorInt == 0) MaterialTheme.colorScheme.onSurface else Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
 }
 
 @Composable

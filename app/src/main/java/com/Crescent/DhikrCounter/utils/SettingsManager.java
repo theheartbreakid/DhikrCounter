@@ -19,6 +19,13 @@ public class SettingsManager {
     // UI Customization
     public float getCornerRadius() { return prefs.getFloat("pref_corner_radius", 24f); }
     public boolean isWavyProgressEnabled() { return prefs.getBoolean("pref_wavy_progress", false); }
+    public float getWavyThickness() { return prefs.getFloat("pref_wavy_thickness", 8f); }
+    public float getWavyAmplitude() { return prefs.getFloat("pref_wavy_amplitude", 1.0f); }
+    public float getWavyWavelength() { return prefs.getFloat("pref_wavy_wavelength", 20f); }
+    public float getWavyGapSize() { return prefs.getFloat("pref_wavy_gap_size", 4f); }
+    public float getWavyWaveSpeed() { return prefs.getFloat("pref_wavy_wave_speed", 20f); }
+    public int getWavyColor() { return prefs.getInt("pref_wavy_color", 0); } // 0 means use theme primary
+    public int getWavyTrackColor() { return prefs.getInt("pref_wavy_track_color", 0); } // 0 means use theme variant
 
     // Widget Appearance
     public String getWidgetStyle() { return prefs.getString("pref_widget_style", "Material 3"); }

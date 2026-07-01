@@ -40,6 +40,13 @@ class CounterViewModel(
     val isNegativeCountAllowed = MutableLiveData<Boolean>()
     val isConfirmResetEnabled = MutableLiveData<Boolean>()
     val isWavyProgressEnabled = MutableLiveData<Boolean>()
+    val wavyThickness = MutableLiveData<Float>()
+    val wavyAmplitude = MutableLiveData<Float>()
+    val wavyWavelength = MutableLiveData<Float>()
+    val wavyGapSize = MutableLiveData<Float>()
+    val wavyWaveSpeed = MutableLiveData<Float>()
+    val wavyColor = MutableLiveData<Int>()
+    val wavyTrackColor = MutableLiveData<Int>()
     val showResetConfirmation = MutableLiveData<Boolean>().apply { value = false }
     val cornerRadius = MutableLiveData<Float>()
     
@@ -50,6 +57,13 @@ class CounterViewModel(
             "pref_allow_negative" -> isNegativeCountAllowed.postValue(p.getBoolean("pref_allow_negative", false))
             "pref_confirm_reset" -> isConfirmResetEnabled.postValue(p.getBoolean("pref_confirm_reset", true))
             "pref_wavy_progress" -> isWavyProgressEnabled.postValue(p.getBoolean("pref_wavy_progress", false))
+            "pref_wavy_thickness" -> wavyThickness.postValue(p.getFloat("pref_wavy_thickness", 8f))
+            "pref_wavy_amplitude" -> wavyAmplitude.postValue(p.getFloat("pref_wavy_amplitude", 1.0f))
+            "pref_wavy_wavelength" -> wavyWavelength.postValue(p.getFloat("pref_wavy_wavelength", 20f))
+            "pref_wavy_gap_size" -> wavyGapSize.postValue(p.getFloat("pref_wavy_gap_size", 4f))
+            "pref_wavy_wave_speed" -> wavyWaveSpeed.postValue(p.getFloat("pref_wavy_wave_speed", 20f))
+            "pref_wavy_color" -> wavyColor.postValue(p.getInt("pref_wavy_color", 0))
+            "pref_wavy_track_color" -> wavyTrackColor.postValue(p.getInt("pref_wavy_track_color", 0))
             "pref_corner_radius" -> cornerRadius.postValue(p.getFloat("pref_corner_radius", 24f))
             "active_session_id" -> {
                 val newId = p.getLong("active_session_id", -1L)
@@ -86,6 +100,13 @@ class CounterViewModel(
         isNegativeCountAllowed.value = settingsManager.isNegativeCountAllowed
         isConfirmResetEnabled.value = settingsManager.isConfirmBeforeReset
         isWavyProgressEnabled.value = settingsManager.isWavyProgressEnabled
+        wavyThickness.value = settingsManager.getWavyThickness()
+        wavyAmplitude.value = settingsManager.getWavyAmplitude()
+        wavyWavelength.value = settingsManager.getWavyWavelength()
+        wavyGapSize.value = settingsManager.getWavyGapSize()
+        wavyWaveSpeed.value = settingsManager.getWavyWaveSpeed()
+        wavyColor.value = settingsManager.getWavyColor()
+        wavyTrackColor.value = settingsManager.getWavyTrackColor()
         cornerRadius.value = settingsManager.cornerRadius
         
         if (activeSessionId.value == null) {

@@ -1,5 +1,6 @@
 package com.Crescent.DhikrCounter.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -208,27 +209,47 @@ fun ProgressIndicatorWrapper(progressValue: Float) {
     val context = LocalContext.current
     val settingsManager = (context.applicationContext as DhikrApplication).settingsManager
     val isWavyEnabled = settingsManager.isWavyProgressEnabled
+    val wavyThickness = settingsManager.wavyThickness
+    val wavyAmplitude = settingsManager.wavyAmplitude
+    val wavyWavelength = settingsManager.wavyWavelength
+    val wavyGapSize = settingsManager.wavyGapSize
+    val wavyWaveSpeed = settingsManager.wavyWaveSpeed
+    val wavyColorInt = settingsManager.getWavyColor()
+    val wavyTrackColorInt = settingsManager.getWavyTrackColor()
+
+    val indicatorColor = if (wavyColorInt != 0) Color(wavyColorInt) else MaterialTheme.colorScheme.primary
+    val trackColor = if (wavyTrackColorInt != 0) Color(wavyTrackColorInt) else indicatorColor.copy(alpha = 0.1f)
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progressValue,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        label = "DashboardWavyProgressAnimation"
+    )
 
     if (isWavyEnabled) {
         LinearWavyProgressIndicator(
-            progress = { progressValue },
+            progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(14.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-            stroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round),
-            trackStroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round)
+                .height(maxOf(14.dp, wavyThickness.dp + 6.dp)),
+            color = indicatorColor,
+            trackColor = trackColor,
+            stroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { wavyThickness.dp.toPx() }, cap = StrokeCap.Round),
+            trackStroke = Stroke(width = with(androidx.compose.ui.platform.LocalDensity.current) { wavyThickness.dp.toPx() }, cap = StrokeCap.Round),
+            amplitude = { _ -> wavyAmplitude },
+            wavelength = wavyWavelength.dp,
+            gapSize = wavyGapSize.dp,
+            waveSpeed = wavyWaveSpeed.dp
         )
     } else {
         LinearProgressIndicator(
-            progress = { progressValue },
+            progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
+                .height(maxOf(8.dp, wavyThickness.dp))
                 .clip(RoundedCornerShape(4.dp)),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            color = indicatorColor,
+            trackColor = trackColor
         )
     }
 }
