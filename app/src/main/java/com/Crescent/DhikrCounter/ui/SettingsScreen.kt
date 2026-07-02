@@ -25,7 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.Crescent.DhikrCounter.DhikrApplication
+import com.Crescent.DhikrCounter.ui.components.GlassDialog
 import com.Crescent.DhikrCounter.utils.BackupManagerUtil
+import com.kashif_e.backdrop.Backdrop
+import com.kashif_e.backdrop.backdrops.LayerBackdrop
+import com.kashif_e.backdrop.backdrops.layerBackdrop
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,6 +38,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    backdrop: LayerBackdrop,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -141,12 +146,17 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 32.dp)
+                .layerBackdrop(backdrop)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues)
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 32.dp)
+            ) {
             item { SettingsHeader("General") }
             item {
                 Surface(
@@ -634,10 +644,13 @@ fun SettingsScreen(
     }
 
     if (showThemeDialog) {
-        AlertDialog(
+        GlassDialog(
+            backdrop = backdrop,
             onDismissRequest = { showThemeDialog = false },
-            title = { Text("Choose Theme", fontWeight = FontWeight.Bold) },
-            text = {
+            cornerRadius = cornerRadius.dp
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Choose Theme", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Column {
                     listOf("system" to "System Default", "light" to "Light", "dark" to "Dark").forEach { (mode, label) ->
                         Surface(
@@ -647,39 +660,34 @@ fun SettingsScreen(
                                 showThemeDialog = false
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surface
+                            color = Color.Transparent
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp),
                                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                             ) {
-                                RadioButton(
-                                    selected = themeMode == mode,
-                                    onClick = null // Handled by Surface
-                                )
+                                RadioButton(selected = themeMode == mode, onClick = null)
                                 Spacer(Modifier.width(12.dp))
                                 Text(label)
                             }
                         }
                     }
                 }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { showThemeDialog = false }) {
-                    Text("Cancel")
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = { showThemeDialog = false }) { Text("Cancel") }
                 }
-            },
-            shape = RoundedCornerShape(cornerRadius.dp)
-        )
+            }
+        }
     }
 
     if (showStyleDialog) {
-        AlertDialog(
+        GlassDialog(
+            backdrop = backdrop,
             onDismissRequest = { showStyleDialog = false },
-            title = { Text("Widget Style", fontWeight = FontWeight.Bold) },
-            text = {
+            cornerRadius = cornerRadius.dp
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Widget Style", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Column {
                     listOf("Material 3", "Glass", "Glass+", "AMOLED", "Minimal").forEach { style ->
                         Surface(
@@ -689,10 +697,10 @@ fun SettingsScreen(
                                 showStyleDialog = false
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surface
+                            color = Color.Transparent
                         ) {
                             Row(
-                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp),
                                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                             ) {
                                 RadioButton(selected = widgetStyle == style, onClick = null)
@@ -702,18 +710,21 @@ fun SettingsScreen(
                         }
                     }
                 }
-            },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = { showStyleDialog = false }) { Text("Cancel") } },
-            shape = RoundedCornerShape(cornerRadius.dp)
-        )
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = { showStyleDialog = false }) { Text("Cancel") }
+                }
+            }
+        }
     }
 
     if (showAnimationDialog) {
-        AlertDialog(
+        GlassDialog(
+            backdrop = backdrop,
             onDismissRequest = { showAnimationDialog = false },
-            title = { Text("Widget Animation", fontWeight = FontWeight.Bold) },
-            text = {
+            cornerRadius = cornerRadius.dp
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Widget Animation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Column {
                     listOf("Off", "Smooth", "Premium").forEach { animation ->
                         Surface(
@@ -723,10 +734,10 @@ fun SettingsScreen(
                                 showAnimationDialog = false
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surface
+                            color = Color.Transparent
                         ) {
                             Row(
-                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp),
                                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                             ) {
                                 RadioButton(selected = widgetAnimation == animation, onClick = null)
@@ -736,12 +747,13 @@ fun SettingsScreen(
                         }
                     }
                 }
-            },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = { showAnimationDialog = false }) { Text("Cancel") } },
-            shape = RoundedCornerShape(cornerRadius.dp)
-        )
+                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = { showAnimationDialog = false }) { Text("Cancel") }
+                }
+            }
+        }
     }
+}
 }
 
 @Composable

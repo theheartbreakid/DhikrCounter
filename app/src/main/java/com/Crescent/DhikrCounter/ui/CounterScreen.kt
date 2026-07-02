@@ -31,12 +31,18 @@ import androidx.compose.ui.unit.sp
 import com.Crescent.DhikrCounter.data.SessionEntity
 import com.Crescent.DhikrCounter.ui.components.AnimatedCounter
 import com.Crescent.DhikrCounter.ui.components.ProgressRing
+import com.Crescent.DhikrCounter.ui.components.GlassDialog
+import com.Crescent.DhikrCounter.ui.components.GlassSurface
+import com.kashif_e.backdrop.Backdrop
+import com.kashif_e.backdrop.backdrops.LayerBackdrop
+import com.kashif_e.backdrop.backdrops.layerBackdrop
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CounterScreen(
     viewModel: CounterViewModel,
+    backdrop: LayerBackdrop,
     onNavigateToSettings: () -> Unit,
     onNavigateToDashboard: () -> Unit
 ) {
@@ -74,162 +80,173 @@ fun CounterScreen(
         drawerContent = {
             ModalDrawerSheet(
                 modifier = Modifier.width(340.dp),
-                drawerContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                drawerContainerColor = Color.Transparent,
                 drawerShape = RoundedCornerShape(topEnd = cornerRadius.dp, bottomEnd = cornerRadius.dp)
             ) {
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    "Sessions",
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                GlassSurface(
+                    backdrop = backdrop,
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .fillMaxWidth(),
-                    placeholder = { Text("Search sessions...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                    )
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    item {
-                        NavigationDrawerItem(
-                            label = { Text("New Session", fontWeight = FontWeight.SemiBold) },
-                            selected = false,
-                            onClick = { 
-                                showAddDialog = true
-                                scope.launch { drawerState.close() }
-                            },
-                            icon = { Icon(Icons.Default.AddCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            shape = RoundedCornerShape(16.dp)
+                        .fillMaxSize()
+                        .padding(end = 12.dp, top = 12.dp, bottom = 12.dp),
+                    cornerRadius = 24.dp,
+                    tonalColor = MaterialTheme.colorScheme.surfaceContainer
+                ) {
+                    Column {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            "Sessions",
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                    }
-                    
-                    items(filteredSessions) { session ->
-                        val isSelected = activeSession?.id == session.id
-                        NavigationDrawerItem(
-                            label = { 
-                                Column {
-                                    Text(session.name, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
-                                    if (session.category.isNotBlank()) {
-                                        Text(session.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                            },
-                            selected = isSelected,
-                            onClick = {
-                                viewModel.setActiveSessionId(session.id)
-                                scope.launch { drawerState.close() }
-                            },
-                            icon = { 
-                                Icon(
-                                    if (isSelected) Icons.Default.CheckCircle else Icons.Outlined.Circle, 
-                                    contentDescription = null, 
-                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                ) 
-                            },
-                            badge = { 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Surface(
-                                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(
-                                            session.count.toString(),
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                        
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .fillMaxWidth(),
+                            placeholder = { Text("Search sessions...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        )
 
-                                    IconButton(
-                                        onClick = {
-                                            sessionToEdit = session
-                                            showEditDialog = true
-                                        },
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Edit,
-                                            contentDescription = "Edit",
-                                            modifier = Modifier.size(18.dp),
-                                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-
-                                    IconButton(
-                                        onClick = {
-                                            if (allSessions.size > 1) {
-                                                sessionToDelete = session
-                                                showDeleteDialog = true
-                                            } else {
-                                                scope.launch {
-                                                    snackbarHostState.showSnackbar("Cannot delete the only remaining session.")
-                                                }
+                        Spacer(Modifier.height(8.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            item {
+                                NavigationDrawerItem(
+                                    label = { Text("New Session", fontWeight = FontWeight.SemiBold) },
+                                    selected = false,
+                                    onClick = { 
+                                        showAddDialog = true
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    icon = { Icon(Icons.Default.AddCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                            }
+                            
+                            items(filteredSessions) { session ->
+                                val isSelected = activeSession?.id == session.id
+                                NavigationDrawerItem(
+                                    label = { 
+                                        Column {
+                                            Text(session.name, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                            if (session.category.isNotBlank()) {
+                                                Text(session.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             }
-                                        },
-                                        modifier = Modifier.size(32.dp)
-                                    ) {
+                                        }
+                                    },
+                                    selected = isSelected,
+                                    onClick = {
+                                        viewModel.setActiveSessionId(session.id)
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    icon = { 
                                         Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = "Delete",
-                                            modifier = Modifier.size(18.dp),
-                                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                }
+                                            if (isSelected) Icons.Default.CheckCircle else Icons.Outlined.Circle, 
+                                            contentDescription = null, 
+                                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        ) 
+                                    },
+                                    badge = { 
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Surface(
+                                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Text(
+                                                    session.count.toString(),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+
+                                            IconButton(
+                                                onClick = {
+                                                    sessionToEdit = session
+                                                    showEditDialog = true
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Edit,
+                                                    contentDescription = "Edit",
+                                                    modifier = Modifier.size(18.dp),
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+
+                                            IconButton(
+                                                onClick = {
+                                                    if (allSessions.size > 1) {
+                                                        sessionToDelete = session
+                                                        showDeleteDialog = true
+                                                    } else {
+                                                        scope.launch {
+                                                            snackbarHostState.showSnackbar("Cannot delete the only remaining session.")
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Delete,
+                                                    contentDescription = "Delete",
+                                                    modifier = Modifier.size(18.dp),
+                                                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                                )
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        
+                        NavigationDrawerItem(
+                            label = { Text("Dashboard & Stats", fontWeight = FontWeight.Medium) },
+                            selected = false,
+                            onClick = {
+                                onNavigateToDashboard()
+                                scope.launch { drawerState.close() }
                             },
+                            icon = { Icon(Icons.Outlined.Analytics, contentDescription = null) },
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                             shape = RoundedCornerShape(16.dp)
                         )
+                        
+                        NavigationDrawerItem(
+                            label = { Text("Settings", fontWeight = FontWeight.Medium) },
+                            selected = false,
+                            onClick = {
+                                onNavigateToSettings()
+                                scope.launch { drawerState.close() }
+                            },
+                            icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        Spacer(Modifier.height(16.dp))
                     }
                 }
-                
-                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                
-                NavigationDrawerItem(
-                    label = { Text("Dashboard & Stats", fontWeight = FontWeight.Medium) },
-                    selected = false,
-                    onClick = {
-                        onNavigateToDashboard()
-                        scope.launch { drawerState.close() }
-                    },
-                    icon = { Icon(Icons.Outlined.Analytics, contentDescription = null) },
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                
-                NavigationDrawerItem(
-                    label = { Text("Settings", fontWeight = FontWeight.Medium) },
-                    selected = false,
-                    onClick = {
-                        onNavigateToSettings()
-                        scope.launch { drawerState.close() }
-                    },
-                    icon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                Spacer(Modifier.height(16.dp))
             }
         }
     ) {
@@ -261,6 +278,7 @@ fun CounterScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .layerBackdrop(backdrop)
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
@@ -448,9 +466,10 @@ fun CounterScreen(
 
     if (showAddDialog) {
         NewSessionDialog(
+            backdrop = backdrop,
             cornerRadius = cornerRadius,
             onDismiss = { showAddDialog = false },
-            onConfirm = { name -> 
+            onConfirm = { name ->
                 viewModel.addSession(name)
                 showAddDialog = false
             }
@@ -461,6 +480,7 @@ fun CounterScreen(
         val sessionForEdit = sessionToEdit ?: activeSession
         if (sessionForEdit != null) {
             EditSessionDialog(
+                backdrop = backdrop,
                 session = sessionForEdit,
                 cornerRadius = cornerRadius,
                 onDismiss = { 
@@ -478,6 +498,7 @@ fun CounterScreen(
 
     if (showDeleteDialog && sessionToDelete != null) {
         DeleteSessionDialog(
+            backdrop = backdrop,
             cornerRadius = cornerRadius,
             onDismiss = { 
                 showDeleteDialog = false
@@ -503,6 +524,7 @@ fun CounterScreen(
 
     if (showResetDialog) {
         ResetConfirmationDialog(
+            backdrop = backdrop,
             cornerRadius = cornerRadius,
             onDismiss = { viewModel.showResetConfirmation.value = false },
             onConfirm = {
@@ -771,12 +793,15 @@ fun MainControls(
 }
 
 @Composable
-fun NewSessionDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+fun NewSessionDialog(backdrop: Backdrop, cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var sessionName by remember { mutableStateOf("") }
-    AlertDialog(
+    GlassDialog(
+        backdrop = backdrop,
         onDismissRequest = onDismiss,
-        title = { Text("New Session", fontWeight = FontWeight.Bold) },
-        text = {
+        cornerRadius = cornerRadius.dp
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("New Session", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             OutlinedTextField(
                 value = sessionName,
                 onValueChange = { sessionName = it },
@@ -785,33 +810,29 @@ fun NewSessionDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (Str
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(cornerRadius.dp / 2)
             )
-        },
-        confirmButton = {
-            Button(onClick = { if (sessionName.isNotBlank()) onConfirm(sessionName) }) {
-                Text("Create")
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = { if (sessionName.isNotBlank()) onConfirm(sessionName) }) { Text("Create") }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(cornerRadius.dp)
-    )
+        }
+    }
 }
 
 @Composable
-fun EditSessionDialog(session: SessionEntity, cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (SessionEntity) -> Unit) {
+fun EditSessionDialog(backdrop: Backdrop, session: SessionEntity, cornerRadius: Float, onDismiss: () -> Unit, onConfirm: (SessionEntity) -> Unit) {
     var name by remember { mutableStateOf(session.name) }
     var category by remember { mutableStateOf(session.category) }
     var goalStr by remember { mutableStateOf(if (session.goalCount > 0) session.goalCount.toString() else "") }
     var incrementStr by remember { mutableStateOf(session.incrementValue.toString()) }
 
-    AlertDialog(
+    GlassDialog(
+        backdrop = backdrop,
         onDismissRequest = onDismiss,
-        title = { Text("Edit Session", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        cornerRadius = cornerRadius.dp
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Edit Session", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -846,85 +867,74 @@ fun EditSessionDialog(session: SessionEntity, cornerRadius: Float, onDismiss: ()
                         shape = RoundedCornerShape(cornerRadius.dp / 2)
                     )
                 }
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        if (name.isNotBlank()) {
+                            val updated = session.copy(
+                                name = name,
+                                category = category,
+                                goalCount = goalStr.toLongOrNull() ?: 0L,
+                                incrementValue = incrementStr.toLongOrNull() ?: 1L,
+                                decrementValue = incrementStr.toLongOrNull() ?: 1L
+                            )
+                            onConfirm(updated)
+                        }
+                    }
+                ) { Text("Save") }
             }
-        },
-        confirmButton = {
-            Button(onClick = { 
-                if (name.isNotBlank()) {
-                    val updated = session.copy(
-                        name = name,
-                        category = category,
-                        goalCount = goalStr.toLongOrNull() ?: 0L,
-                        incrementValue = incrementStr.toLongOrNull() ?: 1L,
-                        decrementValue = incrementStr.toLongOrNull() ?: 1L
-                    )
-                    onConfirm(updated)
-                }
-            }) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(cornerRadius.dp)
-    )
+        }
+    }
 }
 
 @Composable
-fun ResetConfirmationDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
+fun ResetConfirmationDialog(backdrop: Backdrop, cornerRadius: Float, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    GlassDialog(
+        backdrop = backdrop,
         onDismissRequest = onDismiss,
-        title = { Text("Reset Counter?", fontWeight = FontWeight.Bold) },
-        text = {
+        cornerRadius = cornerRadius.dp
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Reset Counter?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("Are you sure you want to reset this counter to 0?")
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
-            ) {
-                Text("Reset")
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) { Text("Reset") }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(cornerRadius.dp)
-    )
+        }
+    }
 }
 
 @Composable
-fun DeleteSessionDialog(cornerRadius: Float, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
+fun DeleteSessionDialog(backdrop: Backdrop, cornerRadius: Float, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    GlassDialog(
+        backdrop = backdrop,
         onDismissRequest = onDismiss,
-        title = { Text("Delete Session?", fontWeight = FontWeight.Bold) },
-        text = {
+        cornerRadius = cornerRadius.dp
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Delete Session?", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("Are you sure you want to delete this session?\nThis action cannot be undone.")
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
-            ) {
-                Text("Delete")
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) { Text("Delete") }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(cornerRadius.dp)
-    )
+        }
+    }
 }

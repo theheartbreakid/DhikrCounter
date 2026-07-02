@@ -39,11 +39,15 @@ import java.util.*
 import com.patrykandpatrick.vico.core.entry.FloatEntry
 import com.patrykandpatrick.vico.core.entry.entryModelOf
 import com.patrykandpatrick.vico.core.entry.entryOf
+import com.kashif_e.backdrop.Backdrop
+import com.kashif_e.backdrop.backdrops.LayerBackdrop
+import com.kashif_e.backdrop.backdrops.layerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: CounterViewModel,
+    backdrop: LayerBackdrop,
     onNavigateBack: () -> Unit
 ) {
     val cornerRadius by viewModel.cornerRadius.observeAsState(24f)
@@ -75,6 +79,7 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .layerBackdrop(backdrop)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
