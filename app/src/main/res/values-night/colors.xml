@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md_theme_dark_primary">#818CF8</color>
+    <color name="md_theme_dark_onPrimary">#1E1B4B</color>
+    <color name="md_theme_dark_primaryContainer">#3730A3</color>
+    <color name="md_theme_dark_onPrimaryContainer">#E0E7FF</color>
+    <color name="md_theme_dark_secondary">#34D399</color>
+    <color name="md_theme_dark_onSecondary">#022C22</color>
+    <color name="md_theme_dark_secondaryContainer">#065F46</color>
+    <color name="md_theme_dark_onSecondaryContainer">#D1FAE5</color>
+    <color name="md_theme_dark_background">#0F172A</color>
+    <color name="md_theme_dark_onBackground">#F8FAFC</color>
+    <color name="md_theme_dark_surface">#1E293B</color>
+    <color name="md_theme_dark_onSurface">#F8FAFC</color>
+
+    <color name="glass_surface">#40000000</color>
+    <color name="glass_highlight">#4DFFFFFF</color>
+    <color name="widget_accent">#4F46E5</color>
+</resources>

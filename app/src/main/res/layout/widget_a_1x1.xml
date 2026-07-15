@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="2dp"
+    android:background="@drawable/widget_bg">
+
+    <TextView
+        android:id="@+id/widget_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="33"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_minus"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:background="@drawable/widget_btn_bg_round"
+            android:src="@drawable/ic_minus"
+            android:scaleType="centerInside"
+            android:padding="2dp"
+            android:contentDescription="Minus" />
+
+        <ImageButton
+            android:id="@+id/btn_reset"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/widget_btn_bg_round"
+            android:src="@drawable/ic_reset"
+            android:scaleType="centerInside"
+            android:padding="2dp"
+            android:contentDescription="Reset" />
+
+        <ImageButton
+            android:id="@+id/btn_plus"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:background="@drawable/widget_btn_bg_round"
+            android:src="@drawable/ic_plus"
+            android:scaleType="centerInside"
+            android:padding="2dp"
+            android:contentDescription="Plus" />
+
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- The actual floating bubble (Center) -->
+    <!-- Fully migrated to Prismal Rendering Pipeline -->
+    <com.matrix.prismal.PrismalFrameLayout
+        android:id="@+id/floating_bubble"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        app:pfl_cornerRadius="32dp"
+        app:pfl_blurRadius="4.0"
+        app:pfl_ior="1.52">
+
+        <TextView
+            android:id="@+id/text_floating_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="0"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_dark_onPrimaryContainer" />
+
+    </com.matrix.prismal.PrismalFrameLayout>
+
+    <!-- Orbiting Action: Minus -->
+    <com.matrix.prismal.PrismalFrameLayout
+        android:id="@+id/btn_floating_decrease_card"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:alpha="0"
+        app:pfl_cornerRadius="16dp"
+        app:pfl_blurRadius="3.0">
+        <ImageButton
+            android:id="@+id/btn_floating_decrease"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_input_delete"
+            android:contentDescription="Decrease"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            app:tint="@android:color/white" />
+    </com.matrix.prismal.PrismalFrameLayout>
+
+    <!-- Orbiting Action: Reset -->
+    <com.matrix.prismal.PrismalFrameLayout
+        android:id="@+id/btn_floating_reset_card"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:alpha="0"
+        app:pfl_cornerRadius="16dp"
+        app:pfl_blurRadius="3.0">
+        <ImageButton
+            android:id="@+id/btn_floating_reset"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Reset"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            app:tint="@android:color/white" />
+    </com.matrix.prismal.PrismalFrameLayout>
+
+    <!-- Orbiting Action: Open App -->
+    <com.matrix.prismal.PrismalFrameLayout
+        android:id="@+id/btn_floating_open_app_card"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        android:alpha="0"
+        app:pfl_cornerRadius="16dp"
+        app:pfl_blurRadius="3.0">
+        <ImageButton
+            android:id="@+id/btn_floating_open_app"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_view"
+            android:contentDescription="Open App"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            app:tint="@android:color/white" />
+    </com.matrix.prismal.PrismalFrameLayout>
+
+</FrameLayout>

@@ -1,0 +1,52 @@
+name: Android CI Release
+
+on:
+  push:
+    branches: [ "master" ] 
+  workflow_dispatch:      
+
+permissions:
+  contents: write         
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'        
+        distribution: 'zulu'
+        
+    - name: Decode Keystore from Secrets
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/release-keystore.jks
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Wipe Cache and Build Fresh Release APK
+      run: |
+        ./gradlew clean assembleRelease \
+          -Pandroid.injected.signing.store.file=${{ github.workspace }}/app/release-keystore.jks \
+          -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+          -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+          -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
+          -x test -x lint
+
+    - name: Automatic GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: "build-${{ github.run_id }}"
+        name: "Production Build #${{ github.run_number }}"
+        draft: false
+        prerelease: false
+        files: |
+          app/release/app-release.apk
+          app/build/outputs/apk/release/app-release.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
