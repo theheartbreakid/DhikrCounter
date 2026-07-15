@@ -81,7 +81,7 @@ dependencies {
     implementation(libs.prismal)
     implementation(libs.coil.compose)
     implementation(libs.kyant.shapes)
-    implementation(libs.kyant.backdrop)
+    compileOnly(libs.kyant.backdrop)
 
     // Navigation
     implementation(libs.navigation.fragment)
