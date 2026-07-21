@@ -11,4 +11,5 @@
     <string name="widget_compact_desc">Count and streak only.</string>
     <string name="widget_progress_desc">Count with goal progress ring.</string>
     <string name="widget_full_desc">Count, ring, streak, and session timer.</string>
+    <string name="tile_floating_counter">Floating Counter</string>
 </resources>

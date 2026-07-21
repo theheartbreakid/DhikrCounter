@@ -74,8 +74,16 @@ class DhikrApplication : Application() {
 
         // Strong reference listener for preference changes
         prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key != null && (key == "active_session_id" || key.startsWith("pref_widget_") || (key.startsWith("pref_") && !key.startsWith("pref_glass_") && !key.startsWith("pref_bubble_")))) {
-                updateAllWidgets(this@DhikrApplication)
+            if (key != null) {
+                if (key == "pref_floating_enabled") {
+                    android.service.quicksettings.TileService.requestListeningState(
+                        this,
+                        android.content.ComponentName(this, com.Crescent.DhikrCounter.service.FloatingCounterTileService::class.java)
+                    )
+                }
+                if (key == "active_session_id" || key.startsWith("pref_widget_") || (key.startsWith("pref_") && !key.startsWith("pref_glass_") && !key.startsWith("pref_bubble_"))) {
+                    updateAllWidgets(this@DhikrApplication)
+                }
             }
         }
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(prefListener)
