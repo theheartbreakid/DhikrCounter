@@ -76,10 +76,12 @@ public class SettingsManager {
 
     public static final boolean DEFAULT_WAVY_PROGRESS_ENABLED = false;
     public static final float DEFAULT_WAVY_THICKNESS = 8f;
+    public static final float DEFAULT_WAVY_TRACK_THICKNESS = 8f;
     public static final float DEFAULT_WAVY_AMPLITUDE = 1.0f;
     public static final float DEFAULT_WAVY_WAVELENGTH = 20f;
     public static final float DEFAULT_WAVY_GAP_SIZE = 4f;
     public static final float DEFAULT_WAVY_WAVE_SPEED = 20f;
+    public static final boolean DEFAULT_WAVY_WAVE_SPEED_AUTO = true;
     public static final int DEFAULT_WAVY_COLOR = 0;
     public static final int DEFAULT_WAVY_TRACK_COLOR = 0;
 
@@ -117,12 +119,38 @@ public class SettingsManager {
     public float getCornerRadius() { return getSafeFloat("pref_corner_radius", DEFAULT_CORNER_RADIUS); }
     public boolean isWavyProgressEnabled() { return prefs.getBoolean("pref_wavy_progress", DEFAULT_WAVY_PROGRESS_ENABLED); }
     public float getWavyThickness() { return getSafeFloat("pref_wavy_thickness", DEFAULT_WAVY_THICKNESS); }
+    public float getWavyTrackThickness() { return getSafeFloat("pref_wavy_track_thickness", DEFAULT_WAVY_TRACK_THICKNESS); }
     public float getWavyAmplitude() { return getSafeFloat("pref_wavy_amplitude", DEFAULT_WAVY_AMPLITUDE); }
     public float getWavyWavelength() { return getSafeFloat("pref_wavy_wavelength", DEFAULT_WAVY_WAVELENGTH); }
     public float getWavyGapSize() { return getSafeFloat("pref_wavy_gap_size", DEFAULT_WAVY_GAP_SIZE); }
     public float getWavyWaveSpeed() { return getSafeFloat("pref_wavy_wave_speed", DEFAULT_WAVY_WAVE_SPEED); }
+    public boolean isWavyWaveSpeedAuto() { return prefs.getBoolean("pref_wavy_wave_speed_auto", DEFAULT_WAVY_WAVE_SPEED_AUTO); }
     public int getWavyColor() { return getSafeInt("pref_wavy_color", DEFAULT_WAVY_COLOR); }
     public int getWavyTrackColor() { return getSafeInt("pref_wavy_track_color", DEFAULT_WAVY_TRACK_COLOR); }
+
+    public void setWavyThickness(float value) { prefs.edit().putFloat("pref_wavy_thickness", value).apply(); }
+    public void setWavyTrackThickness(float value) { prefs.edit().putFloat("pref_wavy_track_thickness", value).apply(); }
+    public void setWavyAmplitude(float value) { prefs.edit().putFloat("pref_wavy_amplitude", value).apply(); }
+    public void setWavyWavelength(float value) { prefs.edit().putFloat("pref_wavy_wavelength", value).apply(); }
+    public void setWavyGapSize(float value) { prefs.edit().putFloat("pref_wavy_gap_size", value).apply(); }
+    public void setWavyWaveSpeed(float value) { prefs.edit().putFloat("pref_wavy_wave_speed", value).apply(); }
+    public void setWavyWaveSpeedAuto(boolean value) { prefs.edit().putBoolean("pref_wavy_wave_speed_auto", value).apply(); }
+    public void setWavyColor(int color) { prefs.edit().putInt("pref_wavy_color", color).apply(); }
+    public void setWavyTrackColor(int color) { prefs.edit().putInt("pref_wavy_track_color", color).apply(); }
+
+    public void resetWavyAppearance() {
+        prefs.edit()
+            .remove("pref_wavy_thickness")
+            .remove("pref_wavy_track_thickness")
+            .remove("pref_wavy_amplitude")
+            .remove("pref_wavy_wavelength")
+            .remove("pref_wavy_gap_size")
+            .remove("pref_wavy_wave_speed")
+            .remove("pref_wavy_wave_speed_auto")
+            .remove("pref_wavy_color")
+            .remove("pref_wavy_track_color")
+            .apply();
+    }
 
     // GETTERS
     public int getGlassTintColor() { return getSafeInt("pref_glass_tint_color", DEFAULT_GLASS_TINT_COLOR); }

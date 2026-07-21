@@ -311,6 +311,19 @@ data class GlassSettings(
     val chromaticAberration: Float
 )
 
+data class WavySettings(
+    val isEnabled: Boolean,
+    val thickness: Float,
+    val trackThickness: Float,
+    val amplitude: Float,
+    val wavelength: Float,
+    val gapSize: Float,
+    val waveSpeed: Float,
+    val waveSpeedAuto: Boolean,
+    val color: Int,
+    val trackColor: Int
+)
+
 val LocalGlassSettings = staticCompositionLocalOf {
     GlassSettings(
         blurRadius = 28f,
@@ -318,6 +331,21 @@ val LocalGlassSettings = staticCompositionLocalOf {
         refractionHeight = 12f,
         refractionAmount = 24f,
         chromaticAberration = 0f
+    )
+}
+
+val LocalWavySettings = staticCompositionLocalOf {
+    WavySettings(
+        isEnabled = false,
+        thickness = 8f,
+        trackThickness = 8f,
+        amplitude = 1.0f,
+        wavelength = 20f,
+        gapSize = 4f,
+        waveSpeed = 20f,
+        waveSpeedAuto = true,
+        color = 0,
+        trackColor = 0
     )
 }
 

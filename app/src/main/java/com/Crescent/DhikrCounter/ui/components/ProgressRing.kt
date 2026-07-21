@@ -20,12 +20,15 @@ fun ProgressRing(
     progress: Float,
     modifier: Modifier = Modifier,
     strokeWidth: Float = 12f,
+    trackStrokeWidth: Float = strokeWidth,
     color: Color = MaterialTheme.colorScheme.primary,
     trackColor: Color = color.copy(alpha = 0.2f),
     gradient: Brush? = null,
     isWavy: Boolean = false,
     amplitude: Float = 1.0f,
-    wavelength: Float = 20f
+    wavelength: Float = 20f,
+    gapSize: Float = 4f,
+    waveSpeed: Float = wavelength
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -40,8 +43,11 @@ fun ProgressRing(
             color = color,
             trackColor = trackColor,
             stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth),
-            amplitude = { amplitude },
-            wavelength = wavelength.dp
+            trackStroke = androidx.compose.ui.graphics.drawscope.Stroke(width = trackStrokeWidth),
+            gapSize = gapSize.dp,
+            amplitude = { it * amplitude },
+            wavelength = wavelength.dp,
+            waveSpeed = waveSpeed.dp
         )
     } else {
         androidx.compose.foundation.Canvas(modifier = modifier) {

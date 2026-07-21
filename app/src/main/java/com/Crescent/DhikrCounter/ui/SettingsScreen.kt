@@ -82,6 +82,15 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
     var allowNegative by remember { mutableStateOf(settingsManager.isNegativeCountAllowed()) }
     var confirmReset by remember { mutableStateOf(settingsManager.isConfirmBeforeReset()) }
     var wavyProgress by remember { mutableStateOf(settingsManager.isWavyProgressEnabled()) }
+    var wavyThickness by remember { mutableFloatStateOf(settingsManager.getWavyThickness()) }
+    var wavyTrackThickness by remember { mutableFloatStateOf(settingsManager.getWavyTrackThickness()) }
+    var wavyAmplitude by remember { mutableFloatStateOf(settingsManager.getWavyAmplitude()) }
+    var wavyWavelength by remember { mutableFloatStateOf(settingsManager.getWavyWavelength()) }
+    var wavyGapSize by remember { mutableFloatStateOf(settingsManager.getWavyGapSize()) }
+    var wavyWaveSpeed by remember { mutableFloatStateOf(settingsManager.getWavyWaveSpeed()) }
+    var wavyWaveSpeedAuto by remember { mutableStateOf(settingsManager.isWavyWaveSpeedAuto()) }
+    var wavyColor by remember { mutableIntStateOf(settingsManager.getWavyColor()) }
+    var wavyTrackColor by remember { mutableIntStateOf(settingsManager.getWavyTrackColor()) }
     var wallpaperUri by remember { mutableStateOf(settingsManager.appWallpaperUri) }
 
     // Floating Counter
@@ -315,6 +324,100 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
                     SettingsToggleItem("Confirm Before Reset", Icons.Outlined.Info, confirmReset, backdrop) { confirmReset = it; prefs.edit().putBoolean("pref_confirm_reset", it).apply() }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
                     SettingsToggleItem("Wavy Progress Bar", Icons.Outlined.Waves, wavyProgress, backdrop) { wavyProgress = it; prefs.edit().putBoolean("pref_wavy_progress", it).apply() }
+                    
+                    AnimatedVisibility(visible = wavyProgress) {
+                        Column {
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
+                            
+                            WavyColorPicker(
+                                title = "Color",
+                                selectedColor = wavyColor,
+                                onColorSelected = { 
+                                    wavyColor = it
+                                    settingsManager.setWavyColor(it)
+                                },
+                                adaptiveColor = adaptiveColor
+                            )
+                            
+                            WavyColorPicker(
+                                title = "Track Color",
+                                selectedColor = wavyTrackColor,
+                                onColorSelected = { 
+                                    wavyTrackColor = it
+                                    settingsManager.setWavyTrackColor(it)
+                                },
+                                adaptiveColor = adaptiveColor
+                            )
+                            
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
+                            
+                            GlassEffectSlider("Stroke Width", wavyThickness, 1f..32f, "dp", backdrop, SettingsManager.DEFAULT_WAVY_THICKNESS) {
+                                wavyThickness = it
+                                settingsManager.setWavyThickness(it)
+                            }
+                            
+                            GlassEffectSlider("Track Stroke Width", wavyTrackThickness, 1f..32f, "dp", backdrop, SettingsManager.DEFAULT_WAVY_TRACK_THICKNESS) {
+                                wavyTrackThickness = it
+                                settingsManager.setWavyTrackThickness(it)
+                            }
+                            
+                            GlassEffectSlider("Gap Size", wavyGapSize, 0f..20f, "dp", backdrop, SettingsManager.DEFAULT_WAVY_GAP_SIZE) {
+                                wavyGapSize = it
+                                settingsManager.setWavyGapSize(it)
+                            }
+                            
+                            GlassEffectSlider("Amplitude", wavyAmplitude * 100f, 0f..100f, "%", backdrop, SettingsManager.DEFAULT_WAVY_AMPLITUDE * 100f) {
+                                wavyAmplitude = it / 100f
+                                settingsManager.setWavyAmplitude(it / 100f)
+                            }
+                            
+                            GlassEffectSlider("Wavelength", wavyWavelength, 5f..100f, "dp", backdrop, SettingsManager.DEFAULT_WAVY_WAVELENGTH) {
+                                wavyWavelength = it
+                                settingsManager.setWavyWavelength(it)
+                            }
+                            
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
+                            
+                            SettingsToggleItem("Auto Wave Speed", Icons.Outlined.Speed, wavyWaveSpeedAuto, backdrop) {
+                                wavyWaveSpeedAuto = it
+                                settingsManager.setWavyWaveSpeedAuto(it)
+                            }
+                            
+                            AnimatedVisibility(visible = !wavyWaveSpeedAuto) {
+                                GlassEffectSlider("Wave Speed", wavyWaveSpeed, 1f..200f, "dp/s", backdrop, SettingsManager.DEFAULT_WAVY_WAVE_SPEED) {
+                                    wavyWaveSpeed = it
+                                    settingsManager.setWavyWaveSpeed(it)
+                                }
+                            }
+
+                            Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
+                                LiquidButton(
+                                    onClick = {
+                                        settingsManager.resetWavyAppearance()
+                                        wavyThickness = settingsManager.getWavyThickness()
+                                        wavyTrackThickness = settingsManager.getWavyTrackThickness()
+                                        wavyAmplitude = settingsManager.getWavyAmplitude()
+                                        wavyWavelength = settingsManager.getWavyWavelength()
+                                        wavyGapSize = settingsManager.getWavyGapSize()
+                                        wavyWaveSpeed = settingsManager.getWavyWaveSpeed()
+                                        wavyWaveSpeedAuto = settingsManager.isWavyWaveSpeedAuto()
+                                        wavyColor = settingsManager.getWavyColor()
+                                        wavyTrackColor = settingsManager.getWavyTrackColor()
+                                    },
+                                    modifier = Modifier.fillMaxWidth(0.6f),
+                                    surfaceColor = Color.Red.copy(alpha = 0.1f),
+                                    tint = Color.Red.copy(alpha = 0.7f),
+                                    backdrop = backdrop
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Outlined.RestartAlt, null, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Reset Wavy Progress", fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1033,6 +1136,74 @@ fun BubbleColorPicker(
                             )
                             .clickable { onColorSelected(color) }
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WavyColorPicker(
+    title: String,
+    selectedColor: Int, // 0 for Auto
+    onColorSelected: (Int) -> Unit,
+    adaptiveColor: Color
+) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = adaptiveColor,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(adaptiveColor.copy(alpha = 0.1f))
+                        .border(
+                            width = 2.dp,
+                            color = if (selectedColor == 0) adaptiveColor else Color.Transparent,
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable { onColorSelected(0) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Outlined.AutoAwesome,
+                        contentDescription = "Auto",
+                        tint = adaptiveColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            items(PalettePresets.size) { index ->
+                val color = PalettePresets[index]
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(color)
+                        .border(
+                            width = 2.dp,
+                            color = if (selectedColor == color.toArgb()) adaptiveColor else Color.Transparent,
+                            shape = RoundedCornerShape(14.dp)
+                        )
+                        .clickable { onColorSelected(color.toArgb()) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selectedColor == color.toArgb()) {
+                        Icon(
+                            Icons.Default.Check,
+                            null,
+                            tint = if (color.luminance() > 0.5f) Color.Black else Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         }

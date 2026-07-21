@@ -47,9 +47,7 @@ fun CounterScreen(viewModel: CounterViewModel) {
     val sessionStats by viewModel.sessionStats.observeAsState(SessionStats())
     val cornerRadius by viewModel.cornerRadius.observeAsState(24f)
     val isFloatingEnabled by viewModel.isFloatingEnabled.observeAsState(false)
-    val isWavyProgress by viewModel.isWavyProgressEnabled.observeAsState(false)
-    val wavyAmplitude by viewModel.wavyAmplitude.observeAsState(1.0f)
-    val wavyWavelength by viewModel.wavyWavelength.observeAsState(20f)
+    val wavySettings = LocalWavySettings.current
     val backdrop = LocalBackdrop.current ?: rememberLayerBackdrop()
 
     var celebrationRingScale by remember { mutableStateOf(1f) }
@@ -103,18 +101,22 @@ fun CounterScreen(viewModel: CounterViewModel) {
                                 ProgressRing(
                                     progress = progress,
                                     modifier = Modifier.fillMaxSize(0.9f),
-                                    strokeWidth = 18f,
-                                    gradient = if (isWavyProgress) null else Brush.sweepGradient(
+                                    strokeWidth = if (wavySettings.isEnabled) wavySettings.thickness else 18f,
+                                    trackStrokeWidth = if (wavySettings.isEnabled) wavySettings.trackThickness else 18f,
+                                    gradient = if (wavySettings.isEnabled) null else Brush.sweepGradient(
                                         listOf(
                                             MaterialTheme.colorScheme.primary,
                                             MaterialTheme.colorScheme.primaryContainer,
                                             MaterialTheme.colorScheme.primary
                                         )
                                     ),
-                                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    isWavy = isWavyProgress,
-                                    amplitude = wavyAmplitude,
-                                    wavelength = wavyWavelength
+                                    trackColor = if (wavySettings.trackColor != 0) Color(wavySettings.trackColor) else contentColor.copy(alpha = 0.1f),
+                                    color = if (wavySettings.color != 0) Color(wavySettings.color) else contentColor,
+                                    isWavy = wavySettings.isEnabled,
+                                    amplitude = wavySettings.amplitude,
+                                    wavelength = wavySettings.wavelength,
+                                    gapSize = wavySettings.gapSize,
+                                    waveSpeed = if (wavySettings.waveSpeedAuto) wavySettings.wavelength else wavySettings.waveSpeed
                                 )
 
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

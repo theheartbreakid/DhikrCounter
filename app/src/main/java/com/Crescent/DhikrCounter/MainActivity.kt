@@ -94,6 +94,18 @@ class MainActivity : ComponentActivity() {
             var hapticIntensity by remember { mutableFloatStateOf(settingsManager.getHapticIntensity()) }
             var hapticEnabled by remember { mutableStateOf(settingsManager.isHapticFeedbackEnabled) }
             
+            // WAVY PROGRESS STATES
+            var wavyEnabled by remember { mutableStateOf(settingsManager.isWavyProgressEnabled()) }
+            var wavyThickness by remember { mutableFloatStateOf(settingsManager.getWavyThickness()) }
+            var wavyTrackThickness by remember { mutableFloatStateOf(settingsManager.getWavyTrackThickness()) }
+            var wavyAmplitude by remember { mutableFloatStateOf(settingsManager.getWavyAmplitude()) }
+            var wavyWavelength by remember { mutableFloatStateOf(settingsManager.getWavyWavelength()) }
+            var wavyGapSize by remember { mutableFloatStateOf(settingsManager.getWavyGapSize()) }
+            var wavyWaveSpeed by remember { mutableFloatStateOf(settingsManager.getWavyWaveSpeed()) }
+            var wavyWaveSpeedAuto by remember { mutableStateOf(settingsManager.isWavyWaveSpeedAuto()) }
+            var wavyColor by remember { mutableIntStateOf(settingsManager.getWavyColor()) }
+            var wavyTrackColor by remember { mutableIntStateOf(settingsManager.getWavyTrackColor()) }
+
             // Fallback font tints
             var fontTintFallbackMode by remember { mutableIntStateOf(settingsManager.getFontTintFallbackMode()) }
             var fontTintPaletteColor by remember { mutableIntStateOf(settingsManager.getFontTintPaletteColor()) }
@@ -127,6 +139,18 @@ class MainActivity : ComponentActivity() {
                         "pref_adaptive_luminance_interval" -> adaptiveLuminanceInterval = p.getInt("pref_adaptive_luminance_interval", SettingsManager.DEFAULT_ADAPTIVE_LUMINANCE_INTERVAL)
                         "pref_haptic_intensity" -> hapticIntensity = p.getFloat("pref_haptic_intensity", SettingsManager.DEFAULT_HAPTIC_INTENSITY)
                         "pref_haptic_feedback" -> hapticEnabled = p.getBoolean("pref_haptic_feedback", SettingsManager.DEFAULT_HAPTIC_FEEDBACK_ENABLED)
+
+                        // Wavy updates
+                        "pref_wavy_progress" -> wavyEnabled = p.getBoolean("pref_wavy_progress", SettingsManager.DEFAULT_WAVY_PROGRESS_ENABLED)
+                        "pref_wavy_thickness" -> wavyThickness = p.getFloat("pref_wavy_thickness", SettingsManager.DEFAULT_WAVY_THICKNESS)
+                        "pref_wavy_track_thickness" -> wavyTrackThickness = p.getFloat("pref_wavy_track_thickness", SettingsManager.DEFAULT_WAVY_TRACK_THICKNESS)
+                        "pref_wavy_amplitude" -> wavyAmplitude = p.getFloat("pref_wavy_amplitude", SettingsManager.DEFAULT_WAVY_AMPLITUDE)
+                        "pref_wavy_wavelength" -> wavyWavelength = p.getFloat("pref_wavy_wavelength", SettingsManager.DEFAULT_WAVY_WAVELENGTH)
+                        "pref_wavy_gap_size" -> wavyGapSize = p.getFloat("pref_wavy_gap_size", SettingsManager.DEFAULT_WAVY_GAP_SIZE)
+                        "pref_wavy_wave_speed" -> wavyWaveSpeed = p.getFloat("pref_wavy_wave_speed", SettingsManager.DEFAULT_WAVY_WAVE_SPEED)
+                        "pref_wavy_wave_speed_auto" -> wavyWaveSpeedAuto = p.getBoolean("pref_wavy_wave_speed_auto", SettingsManager.DEFAULT_WAVY_WAVE_SPEED_AUTO)
+                        "pref_wavy_color" -> wavyColor = p.getInt("pref_wavy_color", SettingsManager.DEFAULT_WAVY_COLOR)
+                        "pref_wavy_track_color" -> wavyTrackColor = p.getInt("pref_wavy_track_color", SettingsManager.DEFAULT_WAVY_TRACK_COLOR)
 
                         "pref_font_tint_fallback_mode" -> fontTintFallbackMode = p.getInt("pref_font_tint_fallback_mode", 0)
                         "pref_font_tint_palette_color" -> fontTintPaletteColor = p.getInt("pref_font_tint_palette_color", 0xFF6366F1.toInt())
@@ -220,10 +244,25 @@ class MainActivity : ComponentActivity() {
                                 chromaticAberration = dockChromaticAberration
                             )
                         }
+                        val wavySettings = remember(wavyEnabled, wavyThickness, wavyTrackThickness, wavyAmplitude, wavyWavelength, wavyGapSize, wavyWaveSpeed, wavyWaveSpeedAuto, wavyColor, wavyTrackColor) {
+                            com.Crescent.DhikrCounter.ui.components.WavySettings(
+                                isEnabled = wavyEnabled,
+                                thickness = wavyThickness,
+                                trackThickness = wavyTrackThickness,
+                                amplitude = wavyAmplitude,
+                                wavelength = wavyWavelength,
+                                gapSize = wavyGapSize,
+                                waveSpeed = wavyWaveSpeed,
+                                waveSpeedAuto = wavyWaveSpeedAuto,
+                                color = wavyColor,
+                                trackColor = wavyTrackColor
+                            )
+                        }
                         CompositionLocalProvider(
                             LocalBackdrop provides backdrop,
                             com.Crescent.DhikrCounter.ui.components.LocalGlassSettings provides glassSettings,
                             com.Crescent.DhikrCounter.ui.components.LocalDockSettings provides dockSettings,
+                            com.Crescent.DhikrCounter.ui.components.LocalWavySettings provides wavySettings,
                             com.Crescent.DhikrCounter.ui.components.LocalAdaptiveLuminanceEnabled provides adaptiveLuminance,
                             com.Crescent.DhikrCounter.ui.components.LocalAdaptiveLuminanceInterval provides adaptiveLuminanceInterval,
                             com.Crescent.DhikrCounter.ui.components.LocalGlassIntensity provides glassIntensity,
