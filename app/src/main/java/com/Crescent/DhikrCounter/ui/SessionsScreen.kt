@@ -3,9 +3,7 @@ package com.Crescent.DhikrCounter.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -52,110 +50,138 @@ fun SessionsScreen(viewModel: CounterViewModel) {
         allSessions.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
     val adaptiveColor = LocalPrismalAdaptiveColor.current
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     val backdrop = LocalBackdrop.current ?: com.kyant.backdrop.backdrops.rememberLayerBackdrop()
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
+    val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
+    val isExpandedWidth = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
+    val isCompactWidth = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.COMPACT
+    val columns = if (isExpandedWidth) 2 else 1
 
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    "Sessions", 
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black, 
-                    color = adaptiveColor
-                )
-                Text(
-                    "${allSessions.size} Active Goals",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = adaptiveColor.copy(alpha = 0.5f)
-                )
-            }
-            
-            LiquidButton(
-                onClick = { showAddDialog = true },
-                backdrop = backdrop,
-                tint = MaterialTheme.colorScheme.primary,
-                adaptiveLuminance = true
-            ) {
-                AdaptiveIcon(Icons.Default.Add, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("New", fontWeight = FontWeight.Bold, color = adaptiveColor)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Search Bar (Redesigned Fix Pass 26)
-        LiquidSurface(
-            modifier = Modifier.fillMaxWidth().height(60.dp),
-            backdrop = backdrop,
-            shape = RoundedCornerShape(20.dp),
-            tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.15f),
-            adaptiveLuminance = true
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AdaptiveIcon(
-                    Icons.Outlined.Search, 
-                    darkVariant = Icons.Filled.Search, 
-                    modifier = Modifier.size(22.dp), 
-                    tint = adaptiveColor.copy(alpha = 0.4f)
-                )
-                Spacer(Modifier.width(12.dp))
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    if (searchQuery.isEmpty()) {
-                        Text(
-                            "Search sessions...", 
-                            color = adaptiveColor.copy(alpha = 0.4f), 
-                            fontSize = 16.sp
-                        )
-                    }
-                    BasicTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        textStyle = TextStyle(
-                            color = adaptiveColor,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        ),
-                        cursorBrush = SolidColor(adaptiveColor),
-                        singleLine = true
-                    )
-                }
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(24.dp)) {
-                        Icon(
-                            Icons.Default.Close, 
-                            contentDescription = null, 
-                            modifier = Modifier.size(16.dp),
-                            tint = adaptiveColor.copy(alpha = 0.4f)
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        LazyColumn(
-            state = listState,
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            state = gridState,
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 120.dp)
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 120.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(filteredSessions, key = { it.id }) { session ->
+            // Header Item
+            item(span = { GridItemSpan(columns) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Sessions", 
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black, 
+                            color = adaptiveColor
+                        )
+                        Text(
+                            "${allSessions.size} Active Goals",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = adaptiveColor.copy(alpha = 0.5f)
+                        )
+                    }
+                    
+                    if (!isExpandedWidth) {
+                        LiquidButton(
+                            onClick = { showAddDialog = true },
+                            backdrop = backdrop,
+                            tint = MaterialTheme.colorScheme.primary,
+                            adaptiveLuminance = true
+                        ) {
+                            AdaptiveIcon(Icons.Default.Add, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("New", fontWeight = FontWeight.Bold, color = adaptiveColor)
+                        }
+                    }
+                }
+            }
+
+            // Search Bar Item
+            item(span = { GridItemSpan(columns) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LiquidSurface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(60.dp),
+                        backdrop = backdrop,
+                        shape = RoundedCornerShape(20.dp),
+                        tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.15f),
+                        adaptiveLuminance = true
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AdaptiveIcon(
+                                Icons.Outlined.Search, 
+                                darkVariant = Icons.Filled.Search, 
+                                modifier = Modifier.size(22.dp), 
+                                tint = adaptiveColor.copy(alpha = 0.4f)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        "Search sessions...", 
+                                        color = adaptiveColor.copy(alpha = 0.4f), 
+                                        fontSize = 16.sp
+                                    )
+                                }
+                                BasicTextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textStyle = TextStyle(
+                                        color = adaptiveColor,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    cursorBrush = SolidColor(adaptiveColor),
+                                    singleLine = true
+                                )
+                            }
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(24.dp)) {
+                                    Icon(
+                                        Icons.Default.Close, 
+                                        contentDescription = null, 
+                                        modifier = Modifier.size(16.dp),
+                                        tint = adaptiveColor.copy(alpha = 0.4f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (isExpandedWidth) {
+                        Spacer(Modifier.width(16.dp))
+                        LiquidButton(
+                            onClick = { showAddDialog = true },
+                            backdrop = backdrop,
+                            tint = MaterialTheme.colorScheme.primary,
+                            adaptiveLuminance = true
+                        ) {
+                            AdaptiveIcon(Icons.Default.Add, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("New Session", fontWeight = FontWeight.Bold, color = adaptiveColor)
+                        }
+                    }
+                }
+            }
+
+            // Session List Items
+            items(filteredSessions.size, key = { index -> filteredSessions[index].id }) { index ->
+                val session = filteredSessions[index]
                 val isSelected = activeSession?.id == session.id
                 
                 LiquidCard(
@@ -166,7 +192,7 @@ fun SessionsScreen(viewModel: CounterViewModel) {
                     tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     adaptiveLuminance = true
                 ) {
-                    val adaptiveColor = LocalPrismalAdaptiveColor.current
+                    val contentColor = LocalPrismalAdaptiveColor.current
                     Row(
                         modifier = Modifier.padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -187,14 +213,14 @@ fun SessionsScreen(viewModel: CounterViewModel) {
                             Text(
                                 session.name, 
                                 fontWeight = FontWeight.Bold,
-                                color = adaptiveColor,
+                                color = contentColor,
                                 fontSize = 17.sp,
                                 letterSpacing = (-0.2).sp
                             )
                             Text(
                                 if (session.category.isNotBlank()) session.category.uppercase() else "GENERAL", 
                                 style = MaterialTheme.typography.labelSmall, 
-                                color = adaptiveColor.copy(alpha = 0.4f),
+                                color = contentColor.copy(alpha = 0.4f),
                                 letterSpacing = 1.2.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -205,41 +231,43 @@ fun SessionsScreen(viewModel: CounterViewModel) {
                                 session.count.toString(),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
-                                color = adaptiveColor
+                                color = contentColor
                             )
                             if (session.goalCount > 0) {
                                 Text(
                                     "/ ${session.goalCount}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = adaptiveColor.copy(alpha = 0.3f)
+                                    color = contentColor.copy(alpha = 0.3f)
                                 )
                             }
                         }
 
-                        Spacer(Modifier.width(12.dp))
+                        if (!isCompactWidth) {
+                            Spacer(Modifier.width(12.dp))
 
-                        LiquidIconButton(
-                            onClick = { sessionToEdit = session; showEditDialog = true },
-                            backdrop = backdrop,
-                            iconSize = 42.dp,
-                            adaptiveLuminance = true
-                        ) {
-                            AdaptiveIcon(Icons.Default.Edit, modifier = Modifier.size(20.dp), tint = adaptiveColor.copy(alpha = 0.4f))
-                        }
+                            LiquidIconButton(
+                                onClick = { sessionToEdit = session; showEditDialog = true },
+                                backdrop = backdrop,
+                                iconSize = 42.dp,
+                                adaptiveLuminance = true
+                            ) {
+                                AdaptiveIcon(Icons.Default.Edit, modifier = Modifier.size(20.dp), tint = contentColor.copy(alpha = 0.4f))
+                            }
 
-                        Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(8.dp))
 
-                        LiquidIconButton(
-                            onClick = { 
-                                sessionToEdit = session
-                                showDeleteDialog = true 
-                            },
-                            backdrop = backdrop,
-                            iconSize = 42.dp,
-                            surfaceColor = Color.Red.copy(alpha = 0.1f),
-                            adaptiveLuminance = true
-                        ) {
-                            AdaptiveIcon(Icons.Default.Delete, modifier = Modifier.size(20.dp), tint = Color.Red.copy(alpha = 0.6f))
+                            LiquidIconButton(
+                                onClick = { 
+                                    sessionToEdit = session
+                                    showDeleteDialog = true 
+                                },
+                                backdrop = backdrop,
+                                iconSize = 42.dp,
+                                surfaceColor = Color.Red.copy(alpha = 0.1f),
+                                adaptiveLuminance = true
+                            ) {
+                                AdaptiveIcon(Icons.Default.Delete, modifier = Modifier.size(20.dp), tint = Color.Red.copy(alpha = 0.6f))
+                            }
                         }
                     }
                 }

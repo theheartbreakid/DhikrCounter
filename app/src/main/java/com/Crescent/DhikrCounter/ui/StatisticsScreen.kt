@@ -65,187 +65,212 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
     
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
 
+    val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
+    val isWide = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
+    val isCompactHeight = sizeDetails.heightClass == com.Crescent.DhikrCounter.ui.components.AppWindowHeightSizeClass.COMPACT
+    val topPadding = if (isCompactHeight) 110.dp else 210.dp
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(32.dp),
-            contentPadding = PaddingValues(top = 210.dp, bottom = 120.dp, start = 24.dp, end = 24.dp)
+            contentPadding = PaddingValues(top = topPadding, bottom = 120.dp, start = if (isWide) 48.dp else 24.dp, end = if (isWide) 48.dp else 24.dp)
         ) {
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        if (selectedChartType == ChartType.TREND) "Activity Trend" else "Session Comparison",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = adaptiveColor.copy(alpha = 0.7f)
-                    )
+                val chartContent: @Composable () -> Unit = {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                if (selectedChartType == ChartType.TREND) "Activity Trend" else "Session Comparison",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = adaptiveColor.copy(alpha = 0.7f)
+                            )
 
-                    ChartTypeToggle(
-                        selectedType = selectedChartType,
-                        onTypeSelected = { selectedChartType = it },
-                        adaptiveColor = adaptiveColor
-                    )
-                }
+                            ChartTypeToggle(
+                                selectedType = selectedChartType,
+                                onTypeSelected = { selectedChartType = it },
+                                adaptiveColor = adaptiveColor
+                            )
+                        }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                // Activity Card - Surface 2
-                LiquidCard(
-                    modifier = Modifier.fillMaxWidth().height(280.dp),
-                    backdrop = backdrop,
-                    shape = RoundedCornerShape(32.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.03f)
-                ) {
-                    Box(modifier = Modifier.padding(20.dp)) {
-                        val primaryColor = MaterialTheme.colorScheme.primary
-                        
-                        if (selectedChartType == ChartType.TREND) {
-                            if (dailyActivity.isNotEmpty()) {
-                                val entries = dailyActivity.mapIndexed { index, pair ->
-                                    entryOf(index.toFloat(), pair.second.toFloat())
-                                }
+                        // Activity Card
+                        LiquidCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(if (isCompactHeight) 220.dp else 280.dp),
+                            backdrop = backdrop,
+                            shape = RoundedCornerShape(32.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.03f)
+                        ) {
+                            Box(modifier = Modifier.padding(20.dp)) {
+                                val primaryColor = MaterialTheme.colorScheme.primary
+                                
+                                if (selectedChartType == ChartType.TREND) {
+                                    if (dailyActivity.isNotEmpty()) {
+                                        val entries = dailyActivity.mapIndexed { index, pair ->
+                                            entryOf(index.toFloat(), pair.second.toFloat())
+                                        }
 
-                                val marker = rememberMarker()
-                                val persistentMarker = remember(entries, marker) {
-                                    if (entries.isNotEmpty()) mapOf(entries.last().x to marker) else emptyMap<Float, Marker>()
-                                }
+                                        val marker = rememberMarker()
+                                        val persistentMarker = remember(entries, marker) {
+                                            if (entries.isNotEmpty()) mapOf(entries.last().x to marker) else emptyMap<Float, Marker>()
+                                        }
 
-                                Chart(
-                                    chart = lineChart(
-                                        lines = listOf(
-                                            lineSpec(
-                                                lineColor = primaryColor,
-                                                lineBackgroundShader = DynamicShaders.fromBrush(
-                                                    Brush.verticalGradient(
-                                                        colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
+                                        Chart(
+                                            chart = lineChart(
+                                                lines = listOf(
+                                                    lineSpec(
+                                                        lineColor = primaryColor,
+                                                        lineBackgroundShader = DynamicShaders.fromBrush(
+                                                            Brush.verticalGradient(
+                                                                colors = listOf(primaryColor.copy(alpha = 0.4f), Color.Transparent)
+                                                            )
+                                                        ),
+                                                        pointConnector = DefaultPointConnector(cubicStrength = 0.2f)
                                                     )
                                                 ),
-                                                pointConnector = DefaultPointConnector(cubicStrength = 0.2f)
-                                            )
-                                        ),
-                                        persistentMarkers = persistentMarker
-                                    ),
-                                    model = entryModelOf(entries),
-                                    modifier = Modifier.fillMaxSize(),
-                                    startAxis = rememberStartAxis(
-                                        label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
-                                        guideline = null,
-                                        axis = null
-                                    ),
-                                    bottomAxis = rememberBottomAxis(
-                                        label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
-                                        guideline = null,
-                                        axis = null
-                                    ),
-                                    marker = marker
-                                )
-                            } else {
-                                Text("No activity data", modifier = Modifier.align(Alignment.Center), color = adaptiveColor.copy(alpha = 0.4f))
-                            }
-                        } else {
-                            if (sessionComparison.isNotEmpty()) {
-                                val entries = sessionComparison.mapIndexed { index, pair ->
-                                    entryOf(index.toFloat(), pair.second.toFloat())
-                                }
+                                                persistentMarkers = persistentMarker
+                                            ),
+                                            model = entryModelOf(entries),
+                                            modifier = Modifier.fillMaxSize(),
+                                            startAxis = rememberStartAxis(
+                                                label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
+                                                guideline = null,
+                                                axis = null
+                                            ),
+                                            bottomAxis = rememberBottomAxis(
+                                                label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
+                                                guideline = null,
+                                                axis = null
+                                            ),
+                                            marker = marker
+                                        )
+                                    } else {
+                                        Text("No activity data", modifier = Modifier.align(Alignment.Center), color = adaptiveColor.copy(alpha = 0.4f))
+                                    }
+                                } else {
+                                    if (sessionComparison.isNotEmpty()) {
+                                        val entries = sessionComparison.mapIndexed { index, pair ->
+                                            entryOf(index.toFloat(), pair.second.toFloat())
+                                        }
 
-                                Chart(
-                                    chart = columnChart(
-                                        columns = listOf(
-                                            lineComponent(
-                                                color = primaryColor,
-                                                thickness = 12.dp,
-                                                shape = Shapes.pillShape
+                                        Chart(
+                                            chart = columnChart(
+                                                columns = listOf(
+                                                    lineComponent(
+                                                        color = primaryColor,
+                                                        thickness = 12.dp,
+                                                        shape = Shapes.pillShape
+                                                    )
+                                                )
+                                            ),
+                                            model = entryModelOf(entries),
+                                            modifier = Modifier.fillMaxSize(),
+                                            startAxis = rememberStartAxis(
+                                                label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
+                                                guideline = null,
+                                                axis = null
+                                            ),
+                                            bottomAxis = rememberBottomAxis(
+                                                label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 8.sp),
+                                                guideline = null,
+                                                axis = null,
+                                                valueFormatter = { value, _ ->
+                                                    sessionComparison.getOrNull(value.toInt())?.first ?: ""
+                                                }
                                             )
                                         )
-                                    ),
-                                    model = entryModelOf(entries),
-                                    modifier = Modifier.fillMaxSize(),
-                                    startAxis = rememberStartAxis(
-                                        label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
-                                        guideline = null,
-                                        axis = null
-                                    ),
-                                    bottomAxis = rememberBottomAxis(
-                                        label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 8.sp),
-                                        guideline = null,
-                                        axis = null,
-                                        valueFormatter = { value, _ ->
-                                            sessionComparison.getOrNull(value.toInt())?.first ?: ""
-                                        }
-                                    )
-                                )
-                            } else {
-                                Text("No session data", modifier = Modifier.align(Alignment.Center), color = adaptiveColor.copy(alpha = 0.4f))
+                                    } else {
+                                        Text("No session data", modifier = Modifier.align(Alignment.Center), color = adaptiveColor.copy(alpha = 0.4f))
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            item {
-                Text("Performance Metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = adaptiveColor.copy(alpha = 0.7f))
-                Spacer(modifier = Modifier.height(16.dp))
+                val statsContent: @Composable () -> Unit = {
+                    Column {
+                        Text("Performance Metrics", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = adaptiveColor.copy(alpha = 0.7f))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Total Counts Card - Surface 3
-                    StatTile(
-                        modifier = Modifier.fillMaxWidth().height(140.dp),
-                        title = "Total Lifetime Counts",
-                        value = String.format(locale, "%,d", globalStats.totalCount),
-                        icon = Icons.Outlined.Functions,
-                        accentColor = Color(0xFF6366F1),
-                        large = true
-                    )
-                    
-                    // Stats Grid Container - Surface 4
-                    LiquidCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backdrop = backdrop,
-                        shape = RoundedCornerShape(32.dp),
-                        tint = Color.White.copy(alpha = 0.02f)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                StatTileInner(
-                                    modifier = Modifier.weight(1f),
-                                    title = "Streak",
-                                    value = "${globalStats.currentStreak}d",
-                                    icon = Icons.Outlined.AutoGraph,
-                                    accentColor = Color(0xFFF59E0B),
-                                    adaptiveColor = adaptiveColor
-                                )
-                                StatTileInner(
-                                    modifier = Modifier.weight(1f),
-                                    title = "Goals",
-                                    value = globalStats.totalGoalsCompleted.toString(),
-                                    icon = Icons.Outlined.EmojiEvents,
-                                    accentColor = Color(0xFF10B981),
-                                    adaptiveColor = adaptiveColor
-                                )
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                StatTileInner(
-                                    modifier = Modifier.weight(1f),
-                                    title = "Avg/Day",
-                                    value = "${globalStats.totalCount / maxOf(1, globalStats.daysActive)}",
-                                    icon = Icons.Outlined.BarChart,
-                                    accentColor = Color(0xFF3B82F6),
-                                    adaptiveColor = adaptiveColor
-                                )
-                                StatTileInner(
-                                    modifier = Modifier.weight(1f),
-                                    title = "Active",
-                                    value = "${globalStats.daysActive}d",
-                                    icon = Icons.Outlined.CalendarToday,
-                                    accentColor = Color(0xFFEC4899),
-                                    adaptiveColor = adaptiveColor
-                                )
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            // Total Counts Card
+                            StatTile(
+                                modifier = Modifier.fillMaxWidth().height(140.dp),
+                                title = "Total Lifetime Counts",
+                                value = String.format(locale, "%,d", globalStats.totalCount),
+                                icon = Icons.Outlined.Functions,
+                                accentColor = Color(0xFF6366F1),
+                                large = true
+                            )
+                            
+                            // Stats Grid Container
+                            LiquidCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                backdrop = backdrop,
+                                shape = RoundedCornerShape(32.dp),
+                                tint = Color.White.copy(alpha = 0.02f)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        StatTileInner(
+                                            modifier = Modifier.weight(1f),
+                                            title = "Streak",
+                                            value = "${globalStats.currentStreak}d",
+                                            icon = Icons.Outlined.AutoGraph,
+                                            accentColor = Color(0xFFF59E0B),
+                                            adaptiveColor = adaptiveColor
+                                        )
+                                        StatTileInner(
+                                            modifier = Modifier.weight(1f),
+                                            title = "Goals",
+                                            value = globalStats.totalGoalsCompleted.toString(),
+                                            icon = Icons.Outlined.EmojiEvents,
+                                            accentColor = Color(0xFF10B981),
+                                            adaptiveColor = adaptiveColor
+                                        )
+                                    }
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        StatTileInner(
+                                            modifier = Modifier.weight(1f),
+                                            title = "Avg/Day",
+                                            value = "${globalStats.totalCount / maxOf(1, globalStats.daysActive)}",
+                                            icon = Icons.Outlined.BarChart,
+                                            accentColor = Color(0xFF3B82F6),
+                                            adaptiveColor = adaptiveColor
+                                        )
+                                        StatTileInner(
+                                            modifier = Modifier.weight(1f),
+                                            title = "Active",
+                                            value = "${globalStats.daysActive}d",
+                                            icon = Icons.Outlined.CalendarToday,
+                                            accentColor = Color(0xFFEC4899),
+                                            adaptiveColor = adaptiveColor
+                                        )
+                                    }
+                                }
                             }
                         }
+                    }
+                }
+
+                if (isWide || (sizeDetails.isLandscape && !isCompactHeight)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                        Box(modifier = Modifier.weight(1.2f)) { chartContent() }
+                        Box(modifier = Modifier.weight(1f)) { statsContent() }
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+                        chartContent()
+                        statsContent()
                     }
                 }
             }
@@ -256,7 +281,7 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .zIndex(1f)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+                .padding(horizontal = 24.dp, vertical = if (isCompactHeight) 12.dp else 24.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             LiquidSurface(
@@ -265,29 +290,57 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                 tint = Color.White.copy(alpha = 0.02f),
                 adaptiveLuminance = true
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        "Statistics",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black,
-                        color = adaptiveColor,
-                        letterSpacing = (-1).sp
-                    )
+                if (isCompactHeight) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Statistics",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                            color = adaptiveColor,
+                            letterSpacing = (-1).sp
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Box(modifier = Modifier.width(300.dp)) {
+                            SegmentedControl(
+                                options = listOf("7D", "30D", "90D", "All"),
+                                selectedOption = selectedFilter,
+                                onOptionSelected = { selectedFilter = it },
+                                adaptiveColor = adaptiveColor,
+                                isFlat = true
+                            )
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "Statistics",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Black,
+                            color = adaptiveColor,
+                            letterSpacing = (-1).sp
+                        )
 
-                    SegmentedControl(
-                        options = listOf("7D", "30D", "90D", "All"),
-                        selectedOption = selectedFilter,
-                        onOptionSelected = { selectedFilter = it },
-                        adaptiveColor = adaptiveColor,
-                        isFlat = true
-                    )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SegmentedControl(
+                            options = listOf("7D", "30D", "90D", "All"),
+                            selectedOption = selectedFilter,
+                            onOptionSelected = { selectedFilter = it },
+                            adaptiveColor = adaptiveColor,
+                            isFlat = true
+                        )
+                    }
                 }
             }
         }

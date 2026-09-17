@@ -185,12 +185,19 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
     var showFontFamilyDialog by remember { mutableStateOf(false) }
     var showFontWeightDialog by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
+    val isWide = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
+
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxHeight()
+                .widthIn(max = 700.dp)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = if (isWide) 48.dp else 24.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
         // APPEARANCE SECTION
         item(key = "header_appearance") { SettingsSectionHeader("Appearance") }
         item(key = "card_appearance") {
@@ -1084,6 +1091,7 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
             iconTint = if (isErrorStatus) Color.Red else Color.Green
         )
     }
+}
 }
 
 private val BubblePresets = listOf(

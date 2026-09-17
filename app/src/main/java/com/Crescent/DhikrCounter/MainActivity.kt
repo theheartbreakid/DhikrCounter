@@ -258,8 +258,36 @@ class MainActivity : ComponentActivity() {
                                 trackColor = wavyTrackColor
                             )
                         }
+                        val config = androidx.compose.ui.platform.LocalConfiguration.current
+                        val widthDp = config.screenWidthDp
+                        val heightDp = config.screenHeightDp
+                        val isLandscape = config.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                        
+                        val widthClass = when {
+                            widthDp < 360 -> com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.COMPACT
+                            widthDp < 600 -> com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.MEDIUM
+                            else -> com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
+                        }
+                        
+                        val heightClass = when {
+                            heightDp < 400 -> com.Crescent.DhikrCounter.ui.components.AppWindowHeightSizeClass.COMPACT
+                            heightDp < 600 -> com.Crescent.DhikrCounter.ui.components.AppWindowHeightSizeClass.MEDIUM
+                            else -> com.Crescent.DhikrCounter.ui.components.AppWindowHeightSizeClass.EXPANDED
+                        }
+                        
+                        val windowSizeDetails = remember(widthClass, heightClass, isLandscape, widthDp, heightDp) {
+                            com.Crescent.DhikrCounter.ui.components.AppWindowSizeDetails(
+                                widthClass = widthClass,
+                                heightClass = heightClass,
+                                isLandscape = isLandscape,
+                                widthDp = widthDp,
+                                heightDp = heightDp
+                            )
+                        }
+
                         CompositionLocalProvider(
                             LocalBackdrop provides backdrop,
+                            com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails provides windowSizeDetails,
                             com.Crescent.DhikrCounter.ui.components.LocalGlassSettings provides glassSettings,
                             com.Crescent.DhikrCounter.ui.components.LocalDockSettings provides dockSettings,
                             com.Crescent.DhikrCounter.ui.components.LocalWavySettings provides wavySettings,

@@ -67,228 +67,271 @@ fun CounterScreen(viewModel: CounterViewModel) {
             EmptySessionState(cornerRadius = cornerRadius, onAddClick = { showAddDialog = true })
         } else {
             val session = activeSession!!
-            Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 72.dp),
+                contentAlignment = Alignment.Center
             ) {
-                // Main Counter Ring (Adaptive Luminance Fix Pass 26)
-                Box(
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val progress = if (session.goalCount > 0) {
-                        (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
-                    } else 0f
+                val availableWidth = maxWidth
+                val availableHeight = maxHeight
+                val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
+                val isWide = availableWidth >= 600.dp || (sizeDetails.isLandscape && availableHeight < availableWidth)
 
-                    CompositionLocalProvider(
-                        LocalGlassIntensity provides (1.0f * celebrationGlassIntensity)
+                val counterCircle: @Composable (androidx.compose.ui.unit.Dp) -> Unit = { circleSize ->
+                    Box(
+                        modifier = Modifier.size(circleSize),
+                        contentAlignment = Alignment.Center
                     ) {
-                        LiquidSurface(
-                            modifier = Modifier.fillMaxSize(0.88f * celebrationRingScale),
-                            backdrop = backdrop,
-                            tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.1f),
-                            shape = CircleShape,
-                            adaptiveLuminance = true
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clickable { viewModel.increment() },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val contentColor = LocalPrismalAdaptiveColor.current
-                                ProgressRing(
-                                    progress = progress,
-                                    modifier = Modifier.fillMaxSize(0.9f),
-                                    strokeWidth = if (wavySettings.isEnabled) wavySettings.thickness else 18f,
-                                    trackStrokeWidth = if (wavySettings.isEnabled) wavySettings.trackThickness else 18f,
-                                    gradient = if (wavySettings.isEnabled) null else Brush.sweepGradient(
-                                        listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.primaryContainer,
-                                            MaterialTheme.colorScheme.primary
-                                        )
-                                    ),
-                                    trackColor = if (wavySettings.trackColor != 0) Color(wavySettings.trackColor) else contentColor.copy(alpha = 0.1f),
-                                    color = if (wavySettings.color != 0) Color(wavySettings.color) else contentColor,
-                                    isWavy = wavySettings.isEnabled,
-                                    amplitude = wavySettings.amplitude,
-                                    wavelength = wavySettings.wavelength,
-                                    gapSize = wavySettings.gapSize,
-                                    waveSpeed = if (wavySettings.waveSpeedAuto) wavySettings.wavelength else wavySettings.waveSpeed
-                                )
+                        val progress = if (session.goalCount > 0) {
+                            (session.count.toFloat() / session.goalCount.toFloat()).coerceIn(0f, 1f)
+                        } else 0f
 
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        session.name.uppercase(),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = contentColor.copy(alpha = 0.4f),
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 2.sp
+                        CompositionLocalProvider(
+                            LocalGlassIntensity provides (1.0f * celebrationGlassIntensity)
+                        ) {
+                            LiquidSurface(
+                                modifier = Modifier.fillMaxSize(0.88f * celebrationRingScale),
+                                backdrop = backdrop,
+                                tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.1f),
+                                shape = CircleShape,
+                                adaptiveLuminance = true
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clickable { viewModel.increment() },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    val contentColor = LocalPrismalAdaptiveColor.current
+                                    ProgressRing(
+                                        progress = progress,
+                                        modifier = Modifier.fillMaxSize(0.9f),
+                                        strokeWidth = if (wavySettings.isEnabled) wavySettings.thickness else 18f,
+                                        trackStrokeWidth = if (wavySettings.isEnabled) wavySettings.trackThickness else 18f,
+                                        gradient = if (wavySettings.isEnabled) null else Brush.sweepGradient(
+                                            listOf(
+                                                MaterialTheme.colorScheme.primary,
+                                                MaterialTheme.colorScheme.primaryContainer,
+                                                MaterialTheme.colorScheme.primary
+                                            )
+                                        ),
+                                        trackColor = if (wavySettings.trackColor != 0) Color(wavySettings.trackColor) else contentColor.copy(alpha = 0.1f),
+                                        color = if (wavySettings.color != 0) Color(wavySettings.color) else contentColor,
+                                        isWavy = wavySettings.isEnabled,
+                                        amplitude = wavySettings.amplitude,
+                                        wavelength = wavySettings.wavelength,
+                                        gapSize = wavySettings.gapSize,
+                                        waveSpeed = if (wavySettings.waveSpeedAuto) wavySettings.wavelength else wavySettings.waveSpeed
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    AnimatedCounter(
-                                        count = session.count,
-                                        enabled = true,
-                                        modifier = Modifier.scale(celebrationNumberScale),
-                                        textStyle = MaterialTheme.typography.displayLarge.copy(
-                                            fontSize = 100.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = contentColor,
-                                            letterSpacing = (-4).sp
+
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            session.name.uppercase(),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontSize = if (circleSize < 200.dp) 10.sp else 14.sp,
+                                            color = contentColor.copy(alpha = 0.4f),
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = if (circleSize < 200.dp) 1.sp else 2.sp
                                         )
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        "TAP TO COUNT",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = contentColor.copy(alpha = 0.3f),
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.sp
-                                    )
+                                        Spacer(modifier = Modifier.height(if (circleSize < 200.dp) 2.dp else 8.dp))
+                                        AnimatedCounter(
+                                            count = session.count,
+                                            enabled = true,
+                                            modifier = Modifier.scale(celebrationNumberScale),
+                                            textStyle = MaterialTheme.typography.displayLarge.copy(
+                                                fontSize = if (circleSize < 200.dp) 44.sp else if (circleSize < 280.dp) 72.sp else 100.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = contentColor,
+                                                letterSpacing = (-4).sp
+                                            )
+                                        )
+                                        Spacer(modifier = Modifier.height(if (circleSize < 200.dp) 2.dp else 4.dp))
+                                        Text(
+                                            "TAP TO COUNT",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontSize = if (circleSize < 200.dp) 8.sp else 11.sp,
+                                            color = contentColor.copy(alpha = 0.3f),
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 1.sp
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    GoalCelebration(
-                        trigger = viewModel.goalReachedEvent,
-                        hapticIntensity = settingsManager.getHapticIntensity(),
-                        hapticEnabled = settingsManager.isHapticFeedbackEnabled,
-                        onAnimationUpdate = { ringScale, numberScale, glassIntensity ->
-                            celebrationRingScale = ringScale
-                            celebrationNumberScale = numberScale
-                            celebrationGlassIntensity = glassIntensity
-                        }
-                    )
+                        GoalCelebration(
+                            trigger = viewModel.goalReachedEvent,
+                            hapticIntensity = settingsManager.getHapticIntensity(),
+                            hapticEnabled = settingsManager.isHapticFeedbackEnabled,
+                            onAnimationUpdate = { ringScale, numberScale, glassIntensity ->
+                                celebrationRingScale = ringScale
+                                celebrationNumberScale = numberScale
+                                celebrationGlassIntensity = glassIntensity
+                            }
+                        )
 
-                    // Floating Bubble Toggle
-                    Box(
-                        modifier = Modifier.fillMaxSize(0.85f),
-                        contentAlignment = Alignment.BottomEnd
-                    ) {
-                        LiquidIconButton(
-                            onClick = { viewModel.toggleFloatingCounter() },
-                            backdrop = backdrop,
-                            surfaceColor = if (isFloatingEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
-                            modifier = Modifier.offset(x = 12.dp, y = 12.dp),
-                            iconSize = 48.dp,
-                            adaptiveLuminance = true
+                        // Floating Bubble Toggle
+                        Box(
+                            modifier = Modifier.fillMaxSize(0.85f),
+                            contentAlignment = Alignment.BottomEnd
                         ) {
-                            AdaptiveIcon(
-                                Icons.Outlined.RadioButtonChecked,
-                                darkVariant = Icons.Filled.RadioButtonChecked,
-                                modifier = Modifier.size(24.dp),
-                                tint = LocalPrismalAdaptiveColor.current.copy(alpha = if (isFloatingEnabled) 1.0f else 0.5f)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Goal Pill (Participates in Adaptive Luminance)
-                if (session.goalCount > 0) {
-                    val remaining = (session.goalCount - session.count).coerceAtLeast(0)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        LiquidChip(
-                            tint = MaterialTheme.colorScheme.primary,
-                            backdrop = backdrop,
-                            onClick = { showEditDialog = true },
-                            adaptiveLuminance = true
-                        ) {
-                            val contentColor = LocalPrismalAdaptiveColor.current
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "GOAL",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Black,
-                                    color = contentColor.copy(alpha = 0.5f),
-                                    letterSpacing = 1.sp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = session.goalCount.toString(),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Black,
-                                    color = contentColor
+                            LiquidIconButton(
+                                onClick = { viewModel.toggleFloatingCounter() },
+                                backdrop = backdrop,
+                                surfaceColor = if (isFloatingEnabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+                                modifier = Modifier.offset(x = 12.dp, y = 12.dp),
+                                iconSize = if (circleSize < 200.dp) 36.dp else 48.dp,
+                                adaptiveLuminance = true
+                            ) {
+                                AdaptiveIcon(
+                                    Icons.Outlined.RadioButtonChecked,
+                                    darkVariant = Icons.Filled.RadioButtonChecked,
+                                    modifier = Modifier.size(if (circleSize < 200.dp) 18.dp else 24.dp),
+                                    tint = LocalPrismalAdaptiveColor.current.copy(alpha = if (isFloatingEnabled) 1.0f else 0.5f)
                                 )
                             }
                         }
-                        
-                        if (remaining > 0) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "$remaining REMAINING",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = LocalPrismalAdaptiveColor.current.copy(alpha = 0.4f),
-                                letterSpacing = 1.5.sp
+                    }
+                }
+
+                val goalPill: @Composable () -> Unit = {
+                    if (session.goalCount > 0) {
+                        val remaining = (session.goalCount - session.count).coerceAtLeast(0)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            LiquidChip(
+                                tint = MaterialTheme.colorScheme.primary,
+                                backdrop = backdrop,
+                                onClick = { showEditDialog = true },
+                                adaptiveLuminance = true
+                            ) {
+                                val contentColor = LocalPrismalAdaptiveColor.current
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "GOAL",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Black,
+                                        color = contentColor.copy(alpha = 0.5f),
+                                        letterSpacing = 1.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = session.goalCount.toString(),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Black,
+                                        color = contentColor
+                                    )
+                                }
+                            }
+                            
+                            if (remaining > 0) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "$remaining REMAINING",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = LocalPrismalAdaptiveColor.current.copy(alpha = 0.4f),
+                                    letterSpacing = 1.5.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                val mainControls: @Composable (Boolean) -> Unit = { isWideMode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        LiquidIconButton(
+                            iconSize = if (isWideMode) 64.dp else 88.dp,
+                            modifier = if (isWideMode) Modifier else Modifier.offset(y = 48.dp),
+                            onClick = { viewModel.showResetConfirmation.value = true },
+                            backdrop = backdrop,
+                            surfaceColor = Color(0xFFFF5252).copy(alpha = 0.2f),
+                            adaptiveLuminance = true
+                        ) {
+                            AdaptiveIcon(
+                                Icons.Default.Refresh,
+                                modifier = Modifier.size(if (isWideMode) 28.dp else 40.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(if (isWideMode) 12.dp else 16.dp))
+
+                        LiquidIconButton(
+                            iconSize = if (isWideMode) 110.dp else 156.dp,
+                            onClick = { viewModel.increment() },
+                            backdrop = backdrop,
+                            surfaceColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                            adaptiveLuminance = true
+                        ) {
+                            AdaptiveIcon(
+                                Icons.Default.Add,
+                                modifier = Modifier.size(if (isWideMode) 54.dp else 76.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(if (isWideMode) 12.dp else 16.dp))
+
+                        LiquidIconButton(
+                            iconSize = if (isWideMode) 64.dp else 88.dp,
+                            modifier = if (isWideMode) Modifier else Modifier.offset(y = 48.dp),
+                            onClick = { viewModel.decrement() },
+                            backdrop = backdrop,
+                            surfaceColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
+                            adaptiveLuminance = true
+                        ) {
+                            AdaptiveIcon(
+                                Icons.Default.Remove,
+                                modifier = Modifier.size(if (isWideMode) 28.dp else 40.dp)
                             )
                         }
                     }
+                }
+
+                if (!isWide) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        val circleSize = if (availableWidth * 0.88f < availableHeight * 0.45f) availableWidth * 0.88f else availableHeight * 0.45f
+                        counterCircle(circleSize)
+                        Spacer(modifier = Modifier.height(if (session.goalCount > 0) 24.dp else 40.dp))
+                        goalPill()
+                        Spacer(modifier = Modifier.height(24.dp))
+                        mainControls(false)
+                        Spacer(modifier = Modifier.height(48.dp))
+                    }
                 } else {
-                    Spacer(modifier = Modifier.height(48.dp))
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Main Controls
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LiquidIconButton(
-                        iconSize = 88.dp,
-                        modifier = Modifier.offset(y = 48.dp),
-                        onClick = { viewModel.showResetConfirmation.value = true },
-                        backdrop = backdrop,
-                        surfaceColor = Color(0xFFFF5252).copy(alpha = 0.2f),
-                        adaptiveLuminance = true
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 24.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        AdaptiveIcon(
-                            Icons.Default.Refresh,
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    LiquidIconButton(
-                        iconSize = 156.dp,
-                        onClick = { viewModel.increment() },
-                        backdrop = backdrop,
-                        surfaceColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                        adaptiveLuminance = true
-                    ) {
-                        AdaptiveIcon(
-                            Icons.Default.Add,
-                            modifier = Modifier.size(76.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    LiquidIconButton(
-                        iconSize = 88.dp,
-                        modifier = Modifier.offset(y = 48.dp),
-                        onClick = { viewModel.decrement() },
-                        backdrop = backdrop,
-                        surfaceColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f),
-                        adaptiveLuminance = true
-                    ) {
-                        AdaptiveIcon(
-                            Icons.Default.Remove,
-                            modifier = Modifier.size(40.dp)
-                        )
+                        val circleSize = if (availableWidth * 0.45f < availableHeight * 0.85f) availableWidth * 0.45f else availableHeight * 0.85f
+                        counterCircle(circleSize)
+                        
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            goalPill()
+                            Spacer(modifier = Modifier.height(20.dp))
+                            mainControls(true)
+                        }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }

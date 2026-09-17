@@ -58,12 +58,16 @@ fun HistoryScreen(viewModel: CounterViewModel) {
         }
     }
 
+    val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
+    val isWide = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
+    val isCompact = sizeDetails.heightClass == com.Crescent.DhikrCounter.ui.components.AppWindowHeightSizeClass.COMPACT
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // History Title & Sub-info
+        // Persistent Header (Title & Clear)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 32.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+                .padding(start = if (isWide) 48.dp else 32.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -85,43 +89,57 @@ fun HistoryScreen(viewModel: CounterViewModel) {
                 LiquidIconButton(
                     onClick = { showClearHistoryDialog = true },
                     backdrop = backdrop,
-                    tint = Color.Red.copy(alpha = 0.1f)
+                    surfaceColor = Color.Red.copy(alpha = 0.1f),
+                    adaptiveLuminance = true
                 ) {
                     Icon(Icons.Outlined.DeleteForever, "Clear History", tint = Color.Red)
                 }
             }
         }
 
-        // Summary chips row - Reorganized to 4 cards (Compact Grid)
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                HistorySummaryChip(Modifier.fillMaxWidth(), "Total Sessions", String.format(locale, "%,d", history.size))
-                HistorySummaryChip(Modifier.fillMaxWidth(), "Best Day", String.format(locale, "%,d", bestDayCount))
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                HistorySummaryChip(Modifier.fillMaxWidth(), "Average", String.format(locale, "%.1f", globalStats.totalCount.toFloat() / maxOf(1, globalStats.daysActive)))
-                HistorySummaryChip(Modifier.fillMaxWidth(), "Total Count", String.format(locale, "%,d", globalStats.totalCount))
-            }
-        }
-
-        Text(
-            "Recent Activity",
-            modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 12.dp, bottom = 8.dp),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = adaptiveColor
-        )
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
+            contentPadding = PaddingValues(horizontal = if (isWide) 48.dp else 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Summary chips Item
+            item(key = "summary_chips") {
+                if (isWide || (sizeDetails.isLandscape && !isCompact)) {
+                    // Single Row for wide/tablet
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        HistorySummaryChip(Modifier.weight(1f), "Total Sessions", String.format(locale, "%,d", history.size))
+                        HistorySummaryChip(Modifier.weight(1f), "Best Day", String.format(locale, "%,d", bestDayCount))
+                        HistorySummaryChip(Modifier.weight(1f), "Average", String.format(locale, "%.1f", globalStats.totalCount.toFloat() / maxOf(1, globalStats.daysActive)))
+                        HistorySummaryChip(Modifier.weight(1f), "Total Count", String.format(locale, "%,d", globalStats.totalCount))
+                    }
+                } else {
+                    // 2-column grid for phones/portrait
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HistorySummaryChip(Modifier.weight(1f), "Total Sessions", String.format(locale, "%,d", history.size))
+                            HistorySummaryChip(Modifier.weight(1f), "Best Day", String.format(locale, "%,d", bestDayCount))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HistorySummaryChip(Modifier.weight(1f), "Average", String.format(locale, "%.1f", globalStats.totalCount.toFloat() / maxOf(1, globalStats.daysActive)))
+                            HistorySummaryChip(Modifier.weight(1f), "Total Count", String.format(locale, "%,d", globalStats.totalCount))
+                        }
+                    }
+                }
+            }
+
+            item(key = "recent_activity_header") {
+                Text(
+                    "Recent Activity",
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = adaptiveColor
+                )
+            }
+
             if (history.isEmpty()) {
                 item(key = "empty_state") {
                     Column(
@@ -164,7 +182,7 @@ fun HistoryScreen(viewModel: CounterViewModel) {
                 }
             }
 
-            item(key = "footer_spacer") { Spacer(modifier = Modifier.height(100.dp)) }
+            item(key = "footer_spacer") { Spacer(modifier = Modifier.height(110.dp)) }
         }
     }
 

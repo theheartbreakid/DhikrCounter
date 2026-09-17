@@ -80,10 +80,17 @@ fun AppNavigation() {
                 }
 
                 if (backdrop != null) {
+                    val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
+                    val isCompact = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.COMPACT || sizeDetails.heightClass == com.Crescent.DhikrCounter.ui.components.AppWindowHeightSizeClass.COMPACT
+                    val isExpanded = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
+                    
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 24.dp, vertical = 24.dp),
+                            .padding(
+                                horizontal = if (isExpanded) 120.dp else if (sizeDetails.isLandscape) 64.dp else 16.dp,
+                                vertical = if (isCompact) 8.dp else 24.dp
+                            ),
                         contentAlignment = Alignment.BottomCenter
                     ) {
                         LiquidBottomTabs(
@@ -119,15 +126,17 @@ fun AppNavigation() {
                                     Icon(
                                         icon, 
                                         contentDescription = label,
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(if (isCompact) 20.dp else 24.dp),
                                         tint = if (isSelected) MaterialTheme.colorScheme.primary else adaptiveColor
                                     )
-                                    Text(
-                                        text = label,
-                                        fontSize = 10.sp,
-                                        maxLines = 1,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else adaptiveColor.copy(alpha = 0.7f)
-                                    )
+                                    if (!isCompact) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 10.sp,
+                                            maxLines = 1,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else adaptiveColor.copy(alpha = 0.7f)
+                                        )
+                                    }
                                 }
                             }
                         }

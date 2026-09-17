@@ -176,13 +176,22 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         updateDisplaySize()
         
-        bubbleX = settingsManager.prefs.getFloat("bubble_last_x", 0f).let { if (it == 0f) 80f else it }
-        bubbleY = settingsManager.prefs.getFloat("bubble_last_y", displaySize.y / 2f)
+        val xRatio = settingsManager.prefs.getFloat("bubble_last_x_ratio", 1f)
+        val yRatio = settingsManager.prefs.getFloat("bubble_last_y_ratio", 0.5f)
+        bubbleX = xRatio * displaySize.x
+        bubbleY = yRatio * displaySize.y
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
+        val oldXRatio = if (displaySize.x > 0) bubbleX / displaySize.x else 1f
+        val oldYRatio = if (displaySize.y > 0) bubbleY / displaySize.y else 0.5f
+        
         super.onConfigurationChanged(newConfig)
         updateDisplaySize()
+        
+        bubbleX = oldXRatio * displaySize.x
+        bubbleY = oldYRatio * displaySize.y
+        
         snapToEdge()
     }
 
@@ -504,9 +513,11 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
     }
 
     private fun savePosition() {
+        val xRatio = if (displaySize.x > 0) bubbleX / displaySize.x else 1f
+        val yRatio = if (displaySize.y > 0) bubbleY / displaySize.y else 0.5f
         settingsManager.prefs.edit()
-            .putFloat("bubble_last_x", bubbleX)
-            .putFloat("bubble_last_y", bubbleY)
+            .putFloat("bubble_last_x_ratio", xRatio)
+            .putFloat("bubble_last_y_ratio", yRatio)
             .apply()
     }
 

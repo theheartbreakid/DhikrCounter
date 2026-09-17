@@ -626,11 +626,18 @@ fun PrismalDialog(
                 ),
             contentAlignment = Alignment.Center
         ) {
+            val sizeDetails = LocalAppWindowSizeDetails.current
+            val dialogWidth = when (sizeDetails.widthClass) {
+                AppWindowWidthSizeClass.COMPACT -> sizeDetails.widthDp.dp * 0.92f
+                AppWindowWidthSizeClass.MEDIUM -> 340.dp
+                AppWindowWidthSizeClass.EXPANDED -> 460.dp
+            }
+
             CompositionLocalProvider(LocalPrismalCaptureHost provides captureHost) {
                 PrismalSurface(
                     modifier = Modifier
-                        .widthIn(max = 340.dp)
-                        .padding(horizontal = 24.dp)
+                        .width(dialogWidth)
+                        .padding(horizontal = if (sizeDetails.widthClass == AppWindowWidthSizeClass.COMPACT) 8.dp else 24.dp)
                         .graphicsLayer(
                             scaleX = scale,
                             scaleY = scale,
@@ -826,3 +833,25 @@ private fun applyCalibratedSettings(
     view.setCaptureDownsample(mode)
     view.setClickAnimationPressScale(0.97f)
 }
+
+enum class AppWindowWidthSizeClass { COMPACT, MEDIUM, EXPANDED }
+enum class AppWindowHeightSizeClass { COMPACT, MEDIUM, EXPANDED }
+
+data class AppWindowSizeDetails(
+    val widthClass: AppWindowWidthSizeClass,
+    val heightClass: AppWindowHeightSizeClass,
+    val isLandscape: Boolean,
+    val widthDp: Int,
+    val heightDp: Int
+)
+
+val LocalAppWindowSizeDetails = staticCompositionLocalOf {
+    AppWindowSizeDetails(
+        widthClass = AppWindowWidthSizeClass.MEDIUM,
+        heightClass = AppWindowHeightSizeClass.MEDIUM,
+        isLandscape = false,
+        widthDp = 360,
+        heightDp = 640
+    )
+}
+
