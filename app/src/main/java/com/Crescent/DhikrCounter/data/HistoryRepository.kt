@@ -25,6 +25,16 @@ data class GlobalStats(
     val daysActive: Int = 0
 )
 
+data class PeriodStats(
+    val totalCount: Long = 0,
+    val averagePerDay: Long = 0,
+    val maxCountPerDay: Long = 0,
+    val daysActive: Int = 0,
+    val goalsCompleted: Int = 0,
+    val currentStreak: Int = 0,
+    val longestStreak: Int = 0
+)
+
 class HistoryRepository(application: Application) {
     private val historyDao: HistoryDao
     private val sessionDao: SessionDao
@@ -136,6 +146,90 @@ class HistoryRepository(application: Application) {
             calendar.add(Calendar.DAY_OF_YEAR, -1)
         }
         return result.reversed()
+    }
+
+    suspend fun getDailyActivityForRange(sessionId: Long?, range: String): List<Pair<Long, Long>> {
+        val days = when (range) {
+            "7D" -> 7
+            "30D" -> 30
+            "90D" -> 90
+            "All" -> {
+                val oldest = historyDao.getOldestTimestamp() ?: System.currentTimeMillis()
+                val diffMillis = System.currentTimeMillis() - oldest
+                val diffDays = (diffMillis / 86400000).toInt() + 1
+                maxOf(7, diffDays)
+            }
+            else -> 7
+        }
+        return getDailyActivity(sessionId, days)
+    }
+
+    suspend fun getPeriodStats(range: String, dailyList: List<Pair<Long, Long>>): PeriodStats {
+        val totalCount = dailyList.sumOf { it.second }
+        val maxCountPerDay = dailyList.maxOfOrNull { it.second } ?: 0L
+        val daysActive = dailyList.count { it.second > 0 }
+        val averagePerDay = if (daysActive > 0) totalCount / daysActive else 0L
+
+        val days = when (range) {
+            "7D" -> 7
+            "30D" -> 30
+            "90D" -> 90
+            "All" -> dailyList.size
+            else -> 7
+        }
+
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        calendar.add(Calendar.DAY_OF_YEAR, -(days - 1))
+        val startTime = if (range == "All") 0L else calendar.timeInMillis
+
+        val goals = historyDao.getGlobalGoalsCompletedSince(startTime)
+
+        val activeDayIndices = dailyList.filter { it.second > 0 }.map { it.first / 86400000 }
+        val (currentStreak, longestStreak) = calculateStreak(activeDayIndices)
+
+        return PeriodStats(
+            totalCount = totalCount,
+            averagePerDay = averagePerDay,
+            maxCountPerDay = maxCountPerDay,
+            daysActive = daysActive,
+            goalsCompleted = goals,
+            currentStreak = currentStreak,
+            longestStreak = longestStreak
+        )
+    }
+
+    suspend fun getSessionComparisonForRange(range: String): List<Pair<String, Long>> {
+        val days = when (range) {
+            "7D" -> 7
+            "30D" -> 30
+            "90D" -> 90
+            "All" -> -1
+            else -> 7
+        }
+        val startTime = if (days == -1) {
+            0L
+        } else {
+            val calendar = Calendar.getInstance()
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            calendar.add(Calendar.DAY_OF_YEAR, -(days - 1))
+            calendar.timeInMillis
+        }
+        val sessions = sessionDao.getAllSessions()
+        return sessions.map { session ->
+            val count = if (startTime == 0L) {
+                historyDao.getLifetimeCount(session.id) ?: 0
+            } else {
+                historyDao.getCountSince(session.id, startTime) ?: 0
+            }
+            Pair(session.name, count)
+        }
     }
 
     suspend fun getSessionComparison(): List<Pair<String, Long>> {

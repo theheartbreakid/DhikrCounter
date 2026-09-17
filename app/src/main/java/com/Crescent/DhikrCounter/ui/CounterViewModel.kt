@@ -177,6 +177,58 @@ class CounterViewModel(
         addSource(allSessions) { update() }
     }
 
+    val statisticsRange = MutableLiveData<String>("7D")
+
+    val statisticsDailyActivity = MediatorLiveData<List<Pair<Long, Long>>>().apply {
+        val update = {
+            val range = statisticsRange.value ?: "7D"
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    postValue(historyRepository.getDailyActivityForRange(null, range))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    postValue(emptyList())
+                }
+            }
+        }
+        addSource(statisticsRange) { update() }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+    }
+
+    val statisticsPeriodStats = MediatorLiveData<PeriodStats>().apply {
+        val update = {
+            val range = statisticsRange.value ?: "7D"
+            val daily = statisticsDailyActivity.value ?: emptyList()
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    postValue(historyRepository.getPeriodStats(range, daily))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    postValue(PeriodStats())
+                }
+            }
+        }
+        addSource(statisticsDailyActivity) { update() }
+        addSource(statisticsRange) { update() }
+    }
+
+    val statisticsSessionComparison = MediatorLiveData<List<Pair<String, Long>>>().apply {
+        val update = {
+            val range = statisticsRange.value ?: "7D"
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    postValue(historyRepository.getSessionComparisonForRange(range))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    postValue(emptyList())
+                }
+            }
+        }
+        addSource(statisticsRange) { update() }
+        addSource(historyRepository.getHistoryChangeFlow().asLiveData()) { update() }
+        addSource(allSessions) { update() }
+    }
+
     fun setActiveSessionId(id: Long) {
         activeSession.value?.let { current ->
             usageSessionManager.endSession(current.count)

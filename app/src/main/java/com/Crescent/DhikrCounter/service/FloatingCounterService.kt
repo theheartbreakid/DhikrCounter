@@ -189,8 +189,12 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
         super.onConfigurationChanged(newConfig)
         updateDisplaySize()
         
-        bubbleX = oldXRatio * displaySize.x
-        bubbleY = oldYRatio * displaySize.y
+        val density = resources.displayMetrics.density
+        val bubbleSizePx = (64 * settingsManager.bubbleScale * density)
+        val halfSize = bubbleSizePx / 2f
+        
+        bubbleX = (oldXRatio * displaySize.x).coerceIn(halfSize, displaySize.x - halfSize)
+        bubbleY = (oldYRatio * displaySize.y).coerceIn(halfSize, displaySize.y - halfSize)
         
         snapToEdge()
     }
@@ -395,8 +399,14 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
                                         isExpanded = false
                                     }
                                 }
-                                bubbleX += delta.x
-                                bubbleY += delta.y
+                                
+                                val bubbleSizePx = (bubbleBaseSize.value * bubbleScale * density)
+                                val halfSize = bubbleSizePx / 2f
+                                
+                                // Clamp within screen bounds
+                                bubbleX = (bubbleX + delta.x).coerceIn(halfSize, displaySize.x - halfSize)
+                                bubbleY = (bubbleY + delta.y).coerceIn(halfSize, displaySize.y - halfSize)
+                                
                                 checkDismissProximity()
                             },
                             onDragEnd = { handleDragEnd() }
@@ -501,6 +511,11 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
         val density = resources.displayMetrics.density
         val bubbleSizePx = (64 * settingsManager.bubbleScale * density).toInt()
         val margin = (1 * density).toInt()
+        
+        // Clamp Y to screen bounds before snapping X
+        val halfSize = bubbleSizePx / 2f
+        bubbleY = bubbleY.coerceIn(halfSize, displaySize.y - halfSize)
+        
         val targetX = if (bubbleX < displaySize.x / 2f) (bubbleSizePx / 2f + margin) else displaySize.x - (bubbleSizePx / 2f + margin)
         
         val animator = ValueAnimator.ofFloat(bubbleX, targetX)
@@ -1062,7 +1077,7 @@ fun DismissTargetUI(
             AdaptiveIcon(
                 Icons.Default.Close, 
                 modifier = Modifier.size(32.dp).graphicsLayer { alpha = xAlpha }, 
-                tint = Color.White
+                tint = LocalPrismalAdaptiveColor.current
             )
         }
     }

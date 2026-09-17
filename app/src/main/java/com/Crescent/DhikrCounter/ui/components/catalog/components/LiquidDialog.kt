@@ -8,7 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -165,27 +167,34 @@ fun LiquidDialog(
                         }
                     }
 
-                    if (title.isNotEmpty()) {
-                        BasicText(
-                            title,
-                            Modifier.padding(24.dp, if (icon != null) 16.dp else 24.dp, 24.dp, 8.dp),
-                            style = TextStyle(LocalPrismalAdaptiveColor.current, 22.sp, FontWeight.Bold)
-                        )
-                    }
+                    // Content Area (Scrollable to prevent overflow on short windows)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        if (title.isNotEmpty()) {
+                            BasicText(
+                                title,
+                                Modifier.padding(24.dp, if (icon != null) 16.dp else 24.dp, 24.dp, 8.dp),
+                                style = TextStyle(LocalPrismalAdaptiveColor.current, 22.sp, FontWeight.Bold)
+                            )
+                        }
 
-                    if (message.isNotEmpty()) {
-                        BasicText(
-                            message,
-                            Modifier
-                                .then(if (isLightTheme) Modifier else Modifier.graphicsLayer(blendMode = BlendMode.Plus))
-                                .padding(24.dp, 8.dp, 24.dp, 16.dp),
-                            style = TextStyle(LocalPrismalAdaptiveColor.current.copy(0.7f), 15.sp)
-                        )
-                    }
+                        if (message.isNotEmpty()) {
+                            BasicText(
+                                message,
+                                Modifier
+                                    .then(if (isLightTheme) Modifier else Modifier.graphicsLayer(blendMode = BlendMode.Plus))
+                                    .padding(24.dp, 8.dp, 24.dp, 16.dp),
+                                style = TextStyle(LocalPrismalAdaptiveColor.current.copy(0.7f), 15.sp)
+                            )
+                        }
 
-                    if (content != null) {
-                        Box(Modifier.padding(horizontal = 24.dp)) {
-                            columnScope.content()
+                        if (content != null) {
+                            Box(Modifier.padding(horizontal = 24.dp)) {
+                                columnScope.content()
+                            }
                         }
                     }
 

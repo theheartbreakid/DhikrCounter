@@ -54,13 +54,13 @@ import java.util.*
 
 @Composable
 fun StatisticsScreen(viewModel: CounterViewModel) {
-    val globalStats by viewModel.globalStats.observeAsState(GlobalStats())
-    val dailyActivity by viewModel.dailyActivity.observeAsState(emptyList())
-    val sessionComparison by viewModel.sessionComparison.observeAsState(emptyList())
+    val dailyActivity by viewModel.statisticsDailyActivity.observeAsState(emptyList())
+    val sessionComparison by viewModel.statisticsSessionComparison.observeAsState(emptyList())
+    val periodStats by viewModel.statisticsPeriodStats.observeAsState(com.Crescent.DhikrCounter.data.PeriodStats())
     val adaptiveColor = LocalPrismalAdaptiveColor.current
     val backdrop = LocalBackdrop.current ?: com.kyant.backdrop.backdrops.rememberLayerBackdrop()
     val dockSettings = LocalDockSettings.current
-    var selectedFilter by remember { mutableStateOf("7D") }
+    val selectedFilter by viewModel.statisticsRange.observeAsState("7D")
     var selectedChartType by remember { mutableStateOf(ChartType.TREND) }
     
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
@@ -112,7 +112,9 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                             Box(modifier = Modifier.padding(20.dp)) {
                                 val primaryColor = MaterialTheme.colorScheme.primary
                                 
-                                if (selectedChartType == ChartType.TREND) {
+                                if (periodStats.totalCount == 0L) {
+                                    Text("No data available for this period", modifier = Modifier.align(Alignment.Center), color = adaptiveColor.copy(alpha = 0.4f))
+                                } else if (selectedChartType == ChartType.TREND) {
                                     if (dailyActivity.isNotEmpty()) {
                                         val entries = dailyActivity.mapIndexed { index, pair ->
                                             entryOf(index.toFloat(), pair.second.toFloat())
@@ -148,7 +150,29 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                                             bottomAxis = rememberBottomAxis(
                                                 label = textComponent(color = adaptiveColor.copy(alpha = 0.5f), textSize = 10.sp),
                                                 guideline = null,
-                                                axis = null
+                                                axis = null,
+                                                valueFormatter = { value, _ ->
+                                                    val idx = value.toInt()
+                                                    dailyActivity.getOrNull(idx)?.let { pair ->
+                                                        val showLabel = when (selectedFilter) {
+                                                            "7D" -> true
+                                                            "30D" -> idx % 5 == 0 || idx == dailyActivity.lastIndex
+                                                            "90D" -> idx % 15 == 0 || idx == dailyActivity.lastIndex
+                                                            "All" -> idx % (maxOf(1, dailyActivity.size / 6)) == 0 || idx == dailyActivity.lastIndex
+                                                            else -> true
+                                                        }
+                                                        if (showLabel) {
+                                                            val pattern = when (selectedFilter) {
+                                                                "7D" -> "EEE"
+                                                                "30D", "90D" -> "d MMM"
+                                                                "All" -> "MMM yy"
+                                                                else -> "d"
+                                                            }
+                                                            val sdf = java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault())
+                                                            sdf.format(java.util.Date(pair.first))
+                                                        } else ""
+                                                    } ?: ""
+                                                }
                                             ),
                                             marker = marker
                                         )
@@ -205,8 +229,8 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                             // Total Counts Card
                             StatTile(
                                 modifier = Modifier.fillMaxWidth().height(140.dp),
-                                title = "Total Lifetime Counts",
-                                value = String.format(locale, "%,d", globalStats.totalCount),
+                                title = if (selectedFilter == "All") "Total Lifetime Counts" else "Total Counts ($selectedFilter)",
+                                value = if (periodStats.totalCount == 0L) "No Activity" else String.format(locale, "%,d", periodStats.totalCount),
                                 icon = Icons.Outlined.Functions,
                                 accentColor = Color(0xFF6366F1),
                                 large = true
@@ -223,8 +247,8 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         StatTileInner(
                                             modifier = Modifier.weight(1f),
-                                            title = "Streak",
-                                            value = "${globalStats.currentStreak}d",
+                                            title = "Max/Day",
+                                            value = if (periodStats.totalCount == 0L) "-" else String.format(locale, "%,d", periodStats.maxCountPerDay),
                                             icon = Icons.Outlined.AutoGraph,
                                             accentColor = Color(0xFFF59E0B),
                                             adaptiveColor = adaptiveColor
@@ -232,7 +256,7 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                                         StatTileInner(
                                             modifier = Modifier.weight(1f),
                                             title = "Goals",
-                                            value = globalStats.totalGoalsCompleted.toString(),
+                                            value = if (periodStats.totalCount == 0L) "-" else periodStats.goalsCompleted.toString(),
                                             icon = Icons.Outlined.EmojiEvents,
                                             accentColor = Color(0xFF10B981),
                                             adaptiveColor = adaptiveColor
@@ -242,7 +266,7 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                                         StatTileInner(
                                             modifier = Modifier.weight(1f),
                                             title = "Avg/Day",
-                                            value = "${globalStats.totalCount / maxOf(1, globalStats.daysActive)}",
+                                            value = if (periodStats.totalCount == 0L) "-" else String.format(locale, "%,d", periodStats.averagePerDay),
                                             icon = Icons.Outlined.BarChart,
                                             accentColor = Color(0xFF3B82F6),
                                             adaptiveColor = adaptiveColor
@@ -250,7 +274,7 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                                         StatTileInner(
                                             modifier = Modifier.weight(1f),
                                             title = "Active",
-                                            value = "${globalStats.daysActive}d",
+                                            value = if (periodStats.totalCount == 0L) "-" else "${periodStats.daysActive}d",
                                             icon = Icons.Outlined.CalendarToday,
                                             accentColor = Color(0xFFEC4899),
                                             adaptiveColor = adaptiveColor
@@ -310,7 +334,7 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                             SegmentedControl(
                                 options = listOf("7D", "30D", "90D", "All"),
                                 selectedOption = selectedFilter,
-                                onOptionSelected = { selectedFilter = it },
+                                onOptionSelected = { viewModel.statisticsRange.value = it },
                                 adaptiveColor = adaptiveColor,
                                 isFlat = true
                             )
@@ -336,7 +360,7 @@ fun StatisticsScreen(viewModel: CounterViewModel) {
                         SegmentedControl(
                             options = listOf("7D", "30D", "90D", "All"),
                             selectedOption = selectedFilter,
-                            onOptionSelected = { selectedFilter = it },
+                            onOptionSelected = { viewModel.statisticsRange.value = it },
                             adaptiveColor = adaptiveColor,
                             isFlat = true
                         )

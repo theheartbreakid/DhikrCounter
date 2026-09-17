@@ -74,13 +74,14 @@ fun LiquidSlider(
         contentAlignment = Alignment.CenterStart
     ) {
         val trackWidth = constraints.maxWidth
+        val currentTrackWidth by rememberUpdatedState(trackWidth)
 
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
         val animationScope = rememberCoroutineScope()
         var isDragging by remember { mutableStateOf(false) }
         var didDrag by remember { mutableStateOf(false) }
 
-        val dampedDragAnimation = remember(animationScope, trackWidth) {
+        val dampedDragAnimation = remember(animationScope) {
             DampedDragAnimation(
                 animationScope = animationScope,
                 initialValue = currentValue(),
@@ -90,8 +91,9 @@ fun LiquidSlider(
                 pressedScale = 1.5f,
                 onDragStarted = { position ->
                     isDragging = true
-                    if (trackWidth > 0) {
-                        val progress = (position.x / trackWidth).coerceIn(0f, 1f)
+                    val width = currentTrackWidth
+                    if (width > 0) {
+                        val progress = (position.x / width).coerceIn(0f, 1f)
                         val newValue = if (isLtr) {
                             valueRange.start + progress * (valueRange.endInclusive - valueRange.start)
                         } else {
@@ -111,10 +113,11 @@ fun LiquidSlider(
                     }
                 },
                 onDrag = { change, dragAmount ->
-                    if (trackWidth > 0) {
+                    val width = currentTrackWidth
+                    if (width > 0) {
                         change.consume()
                         didDrag = true
-                        val delta = (valueRange.endInclusive - valueRange.start) * (dragAmount.x / trackWidth)
+                        val delta = (valueRange.endInclusive - valueRange.start) * (dragAmount.x / width)
                         val newValue = (targetValue + (if (isLtr) delta else -delta)).coerceIn(valueRange)
                         updateValue(newValue)
                         currentOnValueChange(newValue)

@@ -51,6 +51,12 @@ interface HistoryDao {
     @Query("SELECT MAX(timestamp) FROM history WHERE sessionId = :sessionId")
     suspend fun getLastActivity(sessionId: Long): Long?
 
+    @Query("SELECT MIN(timestamp) FROM history")
+    suspend fun getOldestTimestamp(): Long?
+
+    @Query("SELECT COUNT(*) FROM history WHERE (eventType = 'GOAL_COMPLETED' OR (eventType = 'SESSION' AND isGoalMet = 1)) AND timestamp >= :startTime")
+    suspend fun getGlobalGoalsCompletedSince(startTime: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(history: HistoryEntity): Long
 

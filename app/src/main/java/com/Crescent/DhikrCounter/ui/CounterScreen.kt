@@ -77,7 +77,9 @@ fun CounterScreen(viewModel: CounterViewModel) {
                 val availableWidth = maxWidth
                 val availableHeight = maxHeight
                 val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
-                val isWide = availableWidth >= 600.dp || (sizeDetails.isLandscape && availableHeight < availableWidth)
+                val isWide = availableWidth >= 600.dp || 
+                            (sizeDetails.isLandscape && availableHeight < availableWidth) ||
+                            (availableHeight < 500.dp) // Force wide reflow on short windows
 
                 val counterCircle: @Composable (androidx.compose.ui.unit.Dp) -> Unit = { circleSize ->
                     Box(
