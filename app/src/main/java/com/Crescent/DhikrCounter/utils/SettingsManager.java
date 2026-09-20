@@ -60,7 +60,7 @@ public class SettingsManager {
     public static final float DEFAULT_DOCK_BLUR_RADIUS = 8f;
     public static final float DEFAULT_DOCK_REFRACTION_HEIGHT = 24f;
     public static final float DEFAULT_DOCK_REFRACTION_AMOUNT = 24f;
-    public static final float DEFAULT_DOCK_CHROMATIC_ABERRATION = 1f;
+    public static final float DEFAULT_DOCK_CHROMATIC_ABERRATION = 0.01f;
 
     public static final int DEFAULT_ADAPTIVE_LUMINANCE_INTERVAL = 1000;
     public static final String DEFAULT_APP_FONT_FAMILY = "SF Pro Text";
@@ -165,7 +165,14 @@ public class SettingsManager {
     public float getGlassRimIntensity() { return getSafeFloat("pref_glass_rim_intensity", DEFAULT_GLASS_RIM_INTENSITY); }
     public float getGlassSpecularIntensity() { return getSafeFloat("pref_glass_specular_intensity", DEFAULT_GLASS_SPECULAR_INTENSITY); }
     public float getGlassShininess() { return getSafeFloat("pref_glass_shininess", DEFAULT_GLASS_SHININESS); }
-    public float getGlassChromaticAberration() { return getSafeFloat("pref_glass_chromatic_aberration", DEFAULT_GLASS_CHROMATIC_ABERRATION); }
+    public float getGlassChromaticAberration() {
+        float val = getSafeFloat("pref_glass_chromatic_aberration", DEFAULT_GLASS_CHROMATIC_ABERRATION);
+        if (val > 1.0f) {
+            val = val / 100f;
+            prefs.edit().putFloat("pref_glass_chromatic_aberration", val).apply();
+        }
+        return val;
+    }
     public float getGlassDisplacementScale() { return getSafeFloat("pref_glass_displacement_scale", DEFAULT_GLASS_DISPLACEMENT_SCALE); }
     public float getGlassMinSmoothing() { return getSafeFloat("pref_glass_min_smoothing", DEFAULT_GLASS_MIN_SMOOTHING); }
     public float getGlassHighlightWidth() { return getSafeFloat("pref_glass_highlight_width", DEFAULT_GLASS_HIGHLIGHT_WIDTH); }
@@ -212,7 +219,14 @@ public class SettingsManager {
     public float getBubbleBlurRadius() { return getSafeFloat("pref_bubble_blur_radius", DEFAULT_BUBBLE_BLUR_RADIUS); }
     public float getBubbleRefractionHeight() { return getSafeFloat("pref_bubble_refraction_height", DEFAULT_BUBBLE_REFRACTION_HEIGHT); }
     public float getBubbleRefractionAmount() { return getSafeFloat("pref_bubble_refraction_amount", DEFAULT_BUBBLE_REFRACTION_AMOUNT); }
-    public float getBubbleChromaticAberration() { return getSafeFloat("pref_bubble_chromatic_aberration", DEFAULT_BUBBLE_CHROMATIC_ABERRATION); }
+    public float getBubbleChromaticAberration() {
+        float val = getSafeFloat("pref_bubble_chromatic_aberration", DEFAULT_BUBBLE_CHROMATIC_ABERRATION);
+        if (val > 1.0f) {
+            val = val / 100f;
+            prefs.edit().putFloat("pref_bubble_chromatic_aberration", val).apply();
+        }
+        return val;
+    }
     public float getBubbleVibrancy() { return getSafeFloat("pref_bubble_vibrancy", DEFAULT_BUBBLE_VIBRANCY); }
     public float getBubbleTintStrength() { return getSafeFloat("pref_bubble_tint_strength", DEFAULT_BUBBLE_TINT_STRENGTH); }
     public float getBubbleScale() { return getSafeFloat("pref_bubble_scale", DEFAULT_BUBBLE_SCALE); }
@@ -253,7 +267,14 @@ public class SettingsManager {
     public float getDockBlurRadius() { return getSafeFloat("pref_dock_blur_radius", DEFAULT_DOCK_BLUR_RADIUS); }
     public float getDockRefractionHeight() { return getSafeFloat("pref_dock_refraction_height", DEFAULT_DOCK_REFRACTION_HEIGHT); }
     public float getDockRefractionAmount() { return getSafeFloat("pref_dock_refraction_amount", DEFAULT_DOCK_REFRACTION_AMOUNT); }
-    public float getDockChromaticAberration() { return getSafeFloat("pref_dock_chromatic_aberration", DEFAULT_DOCK_CHROMATIC_ABERRATION); }
+    public float getDockChromaticAberration() {
+        float val = getSafeFloat("pref_dock_chromatic_aberration", DEFAULT_DOCK_CHROMATIC_ABERRATION);
+        if (val > 1.0f) {
+            val = val / 100f;
+            prefs.edit().putFloat("pref_dock_chromatic_aberration", val).apply();
+        }
+        return val;
+    }
 
     public void setDockCornerRadius(float value) { prefs.edit().putFloat("pref_dock_corner_radius", value).apply(); }
     public void setDockBlurRadius(float value) { prefs.edit().putFloat("pref_dock_blur_radius", value).apply(); }

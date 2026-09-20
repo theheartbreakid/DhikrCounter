@@ -295,7 +295,7 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
                         settingsManager.setGlassRefractionAmount(it)
                     }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
-                    GlassEffectSlider("Chromatic Aberration", glassChromaticAberration, 0f..100f, "px", backdrop, SettingsManager.DEFAULT_GLASS_CHROMATIC_ABERRATION) {
+                    GlassEffectSlider("Chromatic Aberration", glassChromaticAberration, 0f..1f, "normalized", backdrop, SettingsManager.DEFAULT_GLASS_CHROMATIC_ABERRATION) {
                         glassChromaticAberration = it
                         settingsManager.setGlassChromaticAberration(it)
                     }
@@ -541,7 +541,7 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
                                 settingsManager.setBubbleRefractionAmount(it)
                             }
                             HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
-                            GlassEffectSlider("Chromatic Aberration", bubbleChromaticAberration, 0f..100f, "px", backdrop, SettingsManager.DEFAULT_BUBBLE_CHROMATIC_ABERRATION) {
+                            GlassEffectSlider("Chromatic Aberration", bubbleChromaticAberration, 0f..1f, "normalized", backdrop, SettingsManager.DEFAULT_BUBBLE_CHROMATIC_ABERRATION) {
                                 bubbleChromaticAberration = it
                                 settingsManager.setBubbleChromaticAberration(it)
                             }
@@ -657,7 +657,7 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
                         settingsManager.setDockRefractionAmount(it)
                     }
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
-                    GlassEffectSlider("Chromatic Aberration", dockChromaticAberration, 0f..100f, "px", backdrop, SettingsManager.DEFAULT_DOCK_CHROMATIC_ABERRATION) {
+                    GlassEffectSlider("Chromatic Aberration", dockChromaticAberration, 0f..1f, "normalized", backdrop, SettingsManager.DEFAULT_DOCK_CHROMATIC_ABERRATION) {
                         dockChromaticAberration = it
                         settingsManager.setDockChromaticAberration(it)
                     }
@@ -1293,6 +1293,7 @@ fun GlassEffectSlider(title: String, value: Float, range: ClosedFloatingPointRan
             val displayValue = when (unit) {
                 "%" -> "${value.toInt()}%"
                 "dp" -> String.format(Locale.ROOT, "%d dp", value.toInt())
+                "normalized" -> String.format(Locale.ROOT, "%.2f", value)
                 else -> String.format(Locale.ROOT, "%d", value.toInt())
             }
             Text(displayValue, style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.6f))

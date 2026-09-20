@@ -363,7 +363,7 @@ val LocalDockSettings = staticCompositionLocalOf {
         cornerRadius = 32f,
         refractionHeight = 24f,
         refractionAmount = 24f,
-        chromaticAberration = 1f
+        chromaticAberration = 0.01f
     )
 }
 
