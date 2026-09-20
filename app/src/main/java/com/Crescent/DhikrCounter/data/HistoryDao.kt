@@ -30,7 +30,7 @@ interface HistoryDao {
     @Query("SELECT SUM(countChange) FROM history WHERE timestamp >= :startTime AND timestamp < :endTime AND eventType IN ('INCREMENT', 'DECREMENT', 'COUNT_CHANGED', 'SESSION')")
     suspend fun getGlobalCountInRange(startTime: Long, endTime: Long): Long?
 
-    @Query("SELECT COUNT(*) FROM history WHERE sessionId = :sessionId AND (eventType = 'GOAL_COMPLETED' OR (eventType = 'SESSION' AND isGoalMet = 1))")
+    @Query("SELECT COUNT(*) FROM history WHERE sessionId = :sessionId AND eventType = 'GOAL_COMPLETED'")
     suspend fun getGoalsCompletedCount(sessionId: Long): Int
 
     @Query("SELECT DISTINCT (timestamp / 86400000) FROM history WHERE sessionId = :sessionId AND eventType IN ('INCREMENT', 'COUNT_CHANGED', 'SESSION') ORDER BY timestamp DESC")
@@ -42,7 +42,7 @@ interface HistoryDao {
     @Query("SELECT COUNT(DISTINCT sessionId) FROM history")
     suspend fun getGlobalActiveSessions(): Int
 
-    @Query("SELECT COUNT(*) FROM history WHERE eventType = 'GOAL_COMPLETED' OR (eventType = 'SESSION' AND isGoalMet = 1)")
+    @Query("SELECT COUNT(*) FROM history WHERE eventType = 'GOAL_COMPLETED'")
     suspend fun getGlobalGoalsCompleted(): Int
 
     @Query("SELECT DISTINCT (timestamp / 86400000) FROM history WHERE eventType IN ('INCREMENT', 'COUNT_CHANGED', 'SESSION') ORDER BY timestamp DESC")
@@ -54,7 +54,7 @@ interface HistoryDao {
     @Query("SELECT MIN(timestamp) FROM history")
     suspend fun getOldestTimestamp(): Long?
 
-    @Query("SELECT COUNT(*) FROM history WHERE (eventType = 'GOAL_COMPLETED' OR (eventType = 'SESSION' AND isGoalMet = 1)) AND timestamp >= :startTime")
+    @Query("SELECT COUNT(*) FROM history WHERE eventType = 'GOAL_COMPLETED' AND timestamp >= :startTime")
     suspend fun getGlobalGoalsCompletedSince(startTime: Long): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

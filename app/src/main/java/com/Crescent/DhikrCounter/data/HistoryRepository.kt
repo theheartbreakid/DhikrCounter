@@ -299,45 +299,67 @@ class HistoryRepository(application: Application) {
 
     suspend fun migrateToSessions() {
         val allHistory = historyDao.getAllHistory()
-        if (allHistory.isEmpty() || allHistory.any { it.eventType == "SESSION" }) return
+        
+        // 1. Migrate legacy INCREMENT/DECREMENT to SESSIONS
+        if (allHistory.isNotEmpty() && !allHistory.any { it.eventType == "SESSION" }) {
+            val groupedByCounter = allHistory.groupBy { it.sessionId }
+            val newSessions = mutableListOf<HistoryEntity>()
 
-        val groupedByCounter = allHistory.groupBy { it.sessionId }
-        val newSessions = mutableListOf<HistoryEntity>()
+            for ((counterId, entries) in groupedByCounter) {
+                val sortedEntries = entries.sortedBy { it.timestamp }
+                if (sortedEntries.isEmpty()) continue
 
-        for ((counterId, entries) in groupedByCounter) {
-            val sortedEntries = entries.sortedBy { it.timestamp }
-            if (sortedEntries.isEmpty()) continue
+                var currentSessionStart = sortedEntries[0]
+                var lastEntry = sortedEntries[0]
+                var accumulatedCount = 0L
+                var goalMet = false
 
-            var currentSessionStart = sortedEntries[0]
-            var lastEntry = sortedEntries[0]
-            var accumulatedCount = 0L
-            var goalMet = false
+                for (i in sortedEntries.indices) {
+                    val entry = sortedEntries[i]
+                    
+                    if (entry.timestamp - lastEntry.timestamp > 5 * 60 * 1000) {
+                        newSessions.add(createSyntheticSession(currentSessionStart, lastEntry, accumulatedCount, goalMet))
+                        currentSessionStart = entry
+                        accumulatedCount = 0
+                        goalMet = false
+                    }
 
-            for (i in sortedEntries.indices) {
-                val entry = sortedEntries[i]
-                
-                // If gap is more than 5 minutes, end session and start new
-                if (entry.timestamp - lastEntry.timestamp > 5 * 60 * 1000) {
-                    newSessions.add(createSyntheticSession(currentSessionStart, lastEntry, accumulatedCount, goalMet))
-                    currentSessionStart = entry
-                    accumulatedCount = 0
-                    goalMet = false
+                    if (entry.eventType == "INCREMENT" || entry.eventType == "DECREMENT" || entry.eventType == "COUNT_CHANGED") {
+                        accumulatedCount += entry.countChange
+                    } else if (entry.eventType == "GOAL_COMPLETED") {
+                        goalMet = true
+                    }
+                    
+                    lastEntry = entry
                 }
-
-                if (entry.eventType == "INCREMENT" || entry.eventType == "DECREMENT" || entry.eventType == "COUNT_CHANGED") {
-                    accumulatedCount += entry.countChange
-                } else if (entry.eventType == "GOAL_COMPLETED") {
-                    goalMet = true
-                }
-                
-                lastEntry = entry
+                newSessions.add(createSyntheticSession(currentSessionStart, lastEntry, accumulatedCount, goalMet))
             }
-            newSessions.add(createSyntheticSession(currentSessionStart, lastEntry, accumulatedCount, goalMet))
+
+            if (newSessions.isNotEmpty()) {
+                historyDao.clearAllHistory()
+                newSessions.forEach { historyDao.insert(it) }
+            }
         }
 
-        if (newSessions.isNotEmpty()) {
-            historyDao.clearAllHistory()
-            newSessions.forEach { historyDao.insert(it) }
+        // 2. Ensure all goal-met sessions have a corresponding GOAL_COMPLETED event for immediate history recording logic
+        val updatedHistory = historyDao.getAllHistory()
+        val sessionsWithGoals = updatedHistory.filter { it.eventType == "SESSION" && it.isGoalMet }
+        val existingGoalEvents = updatedHistory.filter { it.eventType == "GOAL_COMPLETED" }
+        
+        for (session in sessionsWithGoals) {
+            val hasEvent = existingGoalEvents.any { it.sessionId == session.sessionId && it.timestamp <= session.timestamp && it.timestamp >= (session.timestamp - session.duration) }
+            if (!hasEvent) {
+                val goalEvent = HistoryEntity(
+                    sessionId = session.sessionId,
+                    sessionName = session.sessionName,
+                    eventType = "GOAL_COMPLETED",
+                    countChange = 0,
+                    timestamp = session.timestamp - 1, // Just before session ends
+                    isGoalMet = true,
+                    endCount = session.endCount
+                )
+                historyDao.insert(goalEvent)
+            }
         }
     }
 

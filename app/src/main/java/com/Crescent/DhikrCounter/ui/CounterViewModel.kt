@@ -93,6 +93,13 @@ class CounterViewModel(
         activeSession = activeSessionId.switchMap { sessionId ->
             repository.getSessionFlow(sessionId).asLiveData()
         }
+
+        // Collect goal reached events from UsageSessionManager and relay them
+        viewModelScope.launch {
+            usageSessionManager.goalReachedEvent.collect {
+                _goalReachedEvent.emit(Unit)
+            }
+        }
     }
 
     val sessionStats = MediatorLiveData<SessionStats>().apply {
@@ -245,43 +252,13 @@ class CounterViewModel(
 
     fun increment() {
         activeSession.value?.let { current ->
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.incrementCount(current.id, current.incrementValue)
-                // historyRepository.logEvent(current.id, current.name, "INCREMENT", current.incrementValue) // Removed per-tap logging
-                updateAllWidgets(getApplication())
-                
-                val isGoalJustReached = current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount
-                if (isGoalJustReached) {
-                    // historyRepository.logEvent(current.id, current.name, "GOAL_COMPLETED", 0) // Removed
-                    usageSessionManager.updateGoalMet(true)
-                    _goalReachedEvent.emit(Unit)
-                }
-                
-                launch(Dispatchers.Main) {
-                    hapticManager.vibrate()
-                    
-                    if (isGoalJustReached) {
-                        soundManager.playSound(SoundManager.SoundType.GOAL_REACHED)
-                    } else {
-                        soundManager.playSound(SoundManager.SoundType.INCREMENT)
-                    }
-                }
-            }
+            usageSessionManager.increment(current)
         }
     }
 
     fun decrement() {
         activeSession.value?.let { current ->
-            val allowNegative = settingsManager.isNegativeCountAllowed
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.decrementCount(current.id, current.incrementValue, allowNegative)
-                // historyRepository.logEvent(current.id, current.name, "DECREMENT", -current.incrementValue) // Removed per-tap logging
-                updateAllWidgets(getApplication())
-                launch(Dispatchers.Main) {
-                    hapticManager.vibrate()
-                    soundManager.playSound(SoundManager.SoundType.DECREMENT)
-                }
-            }
+            usageSessionManager.decrement(current)
         }
     }
 
@@ -291,22 +268,7 @@ class CounterViewModel(
 
     fun reset() {
         activeSession.value?.let { current ->
-            viewModelScope.launch(Dispatchers.IO) {
-                // Before reset, we should end the session to log what was achieved
-                usageSessionManager.endSession(current.count)
-                
-                repository.resetCount(current.id)
-                // historyRepository.logEvent(current.id, current.name, "RESET", -current.count) // Removed per-tap logging
-                
-                // Start a new session with 0 count
-                usageSessionManager.startSession(current.id, current.name, 0)
-
-                updateAllWidgets(getApplication())
-                launch(Dispatchers.Main) {
-                    hapticManager.vibrateStrong()
-                    soundManager.playSound(SoundManager.SoundType.RESET)
-                }
-            }
+            usageSessionManager.reset(current)
         }
     }
 

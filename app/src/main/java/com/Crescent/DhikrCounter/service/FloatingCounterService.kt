@@ -625,39 +625,13 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
 
     private fun incrementCount() {
         activeSession?.let { current ->
-            lifecycleScope.launch {
-                repository.incrementCount(current.id, current.incrementValue)
-                // historyRepository.logEvent(current.id, current.name, "COUNT_CHANGED", current.incrementValue) // Removed
-                updateAllWidgets(this@FloatingCounterService)
-                
-                val isGoalJustReached = current.goalCount > 0 && current.count + current.incrementValue >= current.goalCount && current.count < current.goalCount
-                if (isGoalJustReached) {
-                    usageSessionManager.updateGoalMet(true)
-                }
-
-                launch(Dispatchers.Main) {
-                    performHapticFeedback()
-                    if (isGoalJustReached) {
-                        soundManager.playSound(SoundManager.SoundType.GOAL_REACHED)
-                    } else {
-                        soundManager.playSound(SoundManager.SoundType.INCREMENT)
-                    }
-                }
-            }
+            usageSessionManager.increment(current)
         }
     }
 
     private fun decrementCount() {
         activeSession?.let { current ->
-            lifecycleScope.launch {
-                repository.decrementCount(current.id, current.incrementValue, settingsManager.isNegativeCountAllowed)
-                // historyRepository.logEvent(current.id, current.name, "COUNT_CHANGED", -current.incrementValue) // Removed
-                updateAllWidgets(this@FloatingCounterService)
-                launch(Dispatchers.Main) {
-                    performHapticFeedback()
-                    soundManager.playSound(SoundManager.SoundType.DECREMENT)
-                }
-            }
+            usageSessionManager.decrement(current)
         }
     }
 
@@ -669,17 +643,7 @@ class FloatingCounterService : LifecycleService(), SavedStateRegistryOwner, View
         }
 
         activeSession?.let { current ->
-            lifecycleScope.launch {
-                usageSessionManager.endSession(current.count)
-                repository.resetCount(current.id)
-                // historyRepository.logEvent(current.id, current.name, "RESET", -current.count) // Removed
-                usageSessionManager.startSession(current.id, current.name, 0)
-                updateAllWidgets(this@FloatingCounterService)
-                launch(Dispatchers.Main) {
-                    performHapticFeedback()
-                    soundManager.playSound(SoundManager.SoundType.RESET)
-                }
-            }
+            usageSessionManager.reset(current)
         }
     }
 

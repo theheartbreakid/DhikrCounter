@@ -273,12 +273,20 @@ fun HistoryListItem(entry: HistoryEntity) {
             Column(Modifier.weight(1f)) {
                 Text(entry.sessionName, fontWeight = FontWeight.Bold, color = adaptiveColor, fontSize = 16.sp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(timeFormat.format(Date(entry.timestamp)), style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.5f))
+                    Text(
+                        text = if (entry.eventType == "GOAL_COMPLETED") "Goal Reached!" else timeFormat.format(Date(entry.timestamp)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (entry.eventType == "GOAL_COMPLETED") Color(0xFF10B981) else adaptiveColor.copy(alpha = 0.5f),
+                        fontWeight = if (entry.eventType == "GOAL_COMPLETED") FontWeight.Bold else FontWeight.Normal
+                    )
                     if (entry.duration > 0) {
                         val minutes = entry.duration / 60000
                         val seconds = (entry.duration % 60000) / 1000
                         val durationText = if (minutes > 0) "${minutes}m ${seconds}s" else "${seconds}s"
                         Text(" • $durationText", style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.5f))
+                    }
+                    if (entry.eventType == "GOAL_COMPLETED") {
+                         Text(" • ${timeFormat.format(Date(entry.timestamp))}", style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.5f))
                     }
                 }
             }

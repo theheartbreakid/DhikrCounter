@@ -47,7 +47,17 @@ class DhikrApplication : Application() {
         sessionRepository = SessionRepository(this)
         historyRepository = HistoryRepository(this)
         achievementRepository = AchievementRepository(this)
-        usageSessionManager = UsageSessionManager(historyRepository)
+        usageSessionManager = UsageSessionManager(
+            sessionRepository,
+            historyRepository,
+            settingsManager,
+            soundManager,
+            hapticManager
+        ).apply {
+            onCounterAction = {
+                updateAllWidgets(this@DhikrApplication)
+            }
+        }
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
