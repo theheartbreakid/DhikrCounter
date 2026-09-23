@@ -16,20 +16,11 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # TEMPORARY EXTRACTION STEP: This prints your hidden secrets into the console logs
+    # RECOVERY STEP: This cuts the large base64 block into safe 500-character lines
     - name: Extract My Forgotten Secrets
       run: |
-        echo "=== 1. YOUR KEY_ALIAS (Read top to bottom) ==="
-        echo "${{ secrets.KEY_ALIAS }}" | fold -w 1
-        
-        echo "=== 2. YOUR KEYSTORE_PASSWORD (Read top to bottom) ==="
-        echo "${{ secrets.KEYSTORE_PASSWORD }}" | fold -w 1
-        
-        echo "=== 3. YOUR KEY_PASSWORD (Read top to bottom) ==="
-        echo "${{ secrets.KEY_PASSWORD }}" | fold -w 1
-        
-        echo "=== 4. YOUR KEYSTORE_BASE64 (Copy this entire block below) ==="
-        echo "${{ secrets.KEYSTORE_BASE64 }}"
+        echo "=== YOUR KEYSTORE_BASE64 (Copy ALL lines below) ==="
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | fold -w 500
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
