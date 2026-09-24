@@ -106,6 +106,13 @@ public class SettingsManager {
     public static final boolean DEFAULT_WIDGET_AUTO_FIT = true;
     public static final String DEFAULT_WIDGET_B_CATEGORY = "all";
 
+    // Update Settings
+    public static final String UPDATE_FREQ_NEVER = "Never";
+    public static final String UPDATE_FREQ_DAILY = "Daily";
+    public static final String UPDATE_FREQ_WEEKLY = "Weekly";
+    public static final String UPDATE_FREQ_MONTHLY = "Monthly";
+    public static final String DEFAULT_UPDATE_FREQUENCY = UPDATE_FREQ_DAILY;
+
     public SettingsManager(Context context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
     }
@@ -427,4 +434,35 @@ public class SettingsManager {
             .remove("pref_widget_b_category")
             .apply();
     }
+
+    public String getUpdateFrequency() { return prefs.getString("pref_update_frequency", DEFAULT_UPDATE_FREQUENCY); }
+    public void setUpdateFrequency(String frequency) { prefs.edit().putString("pref_update_frequency", frequency).apply(); }
+
+    public long getLastUpdateCheckTimestamp() { return getSafeLong("pref_last_update_check_timestamp", 0L); }
+    public void setLastUpdateCheckTimestamp(long timestamp) { prefs.edit().putLong("pref_last_update_check_timestamp", timestamp).apply(); }
+
+    public long getNotifiedUpdateId() { return getSafeLong("pref_notified_update_id", 0L); }
+    public void setNotifiedUpdateId(long releaseId) { prefs.edit().putLong("pref_notified_update_id", releaseId).apply(); }
+
+    public long getPendingUpdateVersionCode() { return getSafeLong("pref_pending_update_version_code", 0L); }
+    public void setPendingUpdateVersionCode(long code) { prefs.edit().putLong("pref_pending_update_version_code", code).apply(); }
+
+    public String getPendingUpdateVersionName() { return prefs.getString("pref_pending_update_version_name", ""); }
+    public void setPendingUpdateVersionName(String name) { prefs.edit().putString("pref_pending_update_version_name", name).apply(); }
+
+    public String getDownloadedApkPath() { return prefs.getString("pref_downloaded_apk_path", ""); }
+    public void setDownloadedApkPath(String path) { prefs.edit().putString("pref_downloaded_apk_path", path).apply(); }
+
+    public String getDownloadedApkChecksum() { return prefs.getString("pref_downloaded_apk_checksum", ""); }
+    public void setDownloadedApkChecksum(String checksum) { prefs.edit().putString("pref_downloaded_apk_checksum", checksum).apply(); }
+
+    public void clearPendingUpdate() {
+        prefs.edit()
+            .remove("pref_pending_update_version_code")
+            .remove("pref_pending_update_version_name")
+            .remove("pref_downloaded_apk_path")
+            .remove("pref_downloaded_apk_checksum")
+            .apply();
+    }
 }
+

@@ -22,3 +22,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# In-App Update system rules:
+# Keep update models and receivers
+-keep class com.Crescent.DhikrCounter.core.update.model.** { *; }
+-keep class com.Crescent.DhikrCounter.utils.UpdateReminderReceiver { *; }
+-keep class androidx.core.content.FileProvider { *; }

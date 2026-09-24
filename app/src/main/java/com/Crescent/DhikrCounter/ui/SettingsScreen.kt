@@ -184,6 +184,9 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
     var showFontTintDialog by remember { mutableStateOf(false) }
     var showFontFamilyDialog by remember { mutableStateOf(false) }
     var showFontWeightDialog by remember { mutableStateOf(false) }
+    var showUpdateFrequencyDialog by remember { mutableStateOf(false) }
+    var updateFrequency by remember { mutableStateOf(settingsManager.updateFrequency) }
+    var lastUpdateCheckTimestamp by remember { mutableLongStateOf(settingsManager.lastUpdateCheckTimestamp) }
 
     val sizeDetails = com.Crescent.DhikrCounter.ui.components.LocalAppWindowSizeDetails.current
     val isWide = sizeDetails.widthClass == com.Crescent.DhikrCounter.ui.components.AppWindowWidthSizeClass.EXPANDED
@@ -775,6 +778,69 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
             }
         }
 
+        // UPDATES SECTION
+        item(key = "header_updates") { SettingsSectionHeader("Updates") }
+        item(key = "card_updates") {
+            val app = context.applicationContext as DhikrApplication
+            val currentVersionName = remember { app.updateManager.getCurrentVersionName() }
+            val currentVersionCode = remember { app.updateManager.getCurrentVersionCode() }
+            val lastCheckedStr = remember(lastUpdateCheckTimestamp) {
+                if (lastUpdateCheckTimestamp > 0L) {
+                    SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(Date(lastUpdateCheckTimestamp))
+                } else {
+                    "Never"
+                }
+            }
+
+            LiquidCard(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), backdrop = backdrop) {
+                Column {
+                    SettingsNavigationItem(
+                        title = "Auto-Check Frequency",
+                        value = updateFrequency,
+                        icon = Icons.Outlined.Update,
+                        onClick = { showUpdateFrequencyDialog = true }
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = adaptiveColor.copy(alpha = 0.05f))
+
+                    val updateState by app.updateManager.updateState.collectAsState()
+                    val isChecking = updateState is com.Crescent.DhikrCounter.core.update.model.UpdateState.Checking
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isChecking) {
+                                scope.launch {
+                                    app.updateManager.checkForUpdates(isManual = true)
+                                    lastUpdateCheckTimestamp = settingsManager.lastUpdateCheckTimestamp
+                                }
+                            }
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            AdaptiveIcon(Icons.Outlined.CloudSync, modifier = Modifier.size(24.dp), tint = adaptiveColor.copy(alpha = if (isChecking) 0.3f else 0.7f))
+                            Spacer(Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    if (isChecking) "Checking for updates..." else "Check for Updates",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (isChecking) adaptiveColor.copy(alpha = 0.5f) else adaptiveColor,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text("Last checked: $lastCheckedStr • Current: v$currentVersionName (#$currentVersionCode)", style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.5f))
+                            }
+                        }
+                        if (isChecking) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
+                        } else {
+                            AdaptiveIcon(Icons.AutoMirrored.Filled.KeyboardArrowRight, modifier = Modifier.size(24.dp), tint = adaptiveColor.copy(alpha = 0.3f))
+                        }
+                    }
+                }
+            }
+        }
+
         item { Spacer(modifier = Modifier.height(100.dp)) }
     }
 
@@ -1076,6 +1142,53 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
                 }
             }
         )
+    }
+
+    if (showUpdateFrequencyDialog) {
+        val frequencies = listOf(
+            SettingsManager.UPDATE_FREQ_NEVER,
+            SettingsManager.UPDATE_FREQ_DAILY,
+            SettingsManager.UPDATE_FREQ_WEEKLY,
+            SettingsManager.UPDATE_FREQ_MONTHLY
+        )
+
+        LiquidDialog(
+            onDismissRequest = { showUpdateFrequencyDialog = false },
+            backdrop = backdrop,
+            title = "Update Check Frequency",
+            positiveText = "Done",
+            negativeText = null,
+            onPositive = { showUpdateFrequencyDialog = false }
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                frequencies.forEach { freq ->
+                    val isSelected = updateFrequency.equals(freq, ignoreCase = true)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) LocalPrismalAdaptiveColor.current.copy(alpha = 0.1f) else Color.Transparent)
+                            .clickable {
+                                updateFrequency = freq
+                                settingsManager.updateFrequency = freq
+                            }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = freq,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = LocalPrismalAdaptiveColor.current
+                        )
+                        if (isSelected) {
+                            Icon(Icons.Default.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (showStatusDialog) {

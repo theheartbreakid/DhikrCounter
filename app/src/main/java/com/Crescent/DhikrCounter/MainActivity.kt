@@ -10,6 +10,8 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -302,6 +304,10 @@ class MainActivity : ComponentActivity() {
                             com.Crescent.DhikrCounter.ui.components.LocalPrismalSceneVersion provides (fontTintFallbackMode.toLong() + fontTintPaletteColor.toLong() + fontTintCustomColor.toLong())
                         ) {
                             AppNavigation()
+                            com.Crescent.DhikrCounter.ui.components.UpdateDialogs(
+                                updateManager = (application as DhikrApplication).updateManager,
+                                backdrop = backdrop
+                            )
                         }
                     }
                 }
@@ -339,6 +345,11 @@ class MainActivity : ComponentActivity() {
         if (intent?.getBooleanExtra("show_reset_dialog", false) == true) {
             viewModel.showResetConfirmation.value = true
         }
+        if (intent?.getBooleanExtra("show_update_check", false) == true) {
+            lifecycleScope.launch {
+                (application as DhikrApplication).updateManager.checkForUpdates(isManual = true)
+            }
+        }
     }
 
     override fun onResume() {
@@ -347,6 +358,15 @@ class MainActivity : ComponentActivity() {
             settingsManager.prefs.edit().putBoolean("pref_floating_enabled", false).apply()
         }
         updateFloatingService()
+
+        // Check if returning from Settings while waiting for install permission
+        val updateMgr = (application as DhikrApplication).updateManager
+        val curState = updateMgr.updateState.value
+        if (curState is com.Crescent.DhikrCounter.core.update.model.UpdateState.WaitingForInstallPermission) {
+            if (updateMgr.canRequestPackageInstalls()) {
+                updateMgr.launchInstaller(curState.apkPath)
+            }
+        }
     }
 
     override fun onDestroy() {

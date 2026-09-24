@@ -32,6 +32,8 @@ class DhikrApplication : Application() {
         private set
     lateinit var hapticManager: HapticManager
         private set
+    lateinit var updateManager: com.Crescent.DhikrCounter.core.update.UpdateManager
+        private set
         
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     
@@ -44,6 +46,7 @@ class DhikrApplication : Application() {
         settingsManager = SettingsManager(this)
         soundManager = SoundManager(this, settingsManager)
         hapticManager = HapticManager(this)
+        updateManager = com.Crescent.DhikrCounter.core.update.UpdateManager(this, settingsManager)
         sessionRepository = SessionRepository(this)
         historyRepository = HistoryRepository(this)
         achievementRepository = AchievementRepository(this)
@@ -58,6 +61,9 @@ class DhikrApplication : Application() {
                 updateAllWidgets(this@DhikrApplication)
             }
         }
+
+        // Schedule periodic update check based on configured frequency
+        com.Crescent.DhikrCounter.utils.UpdateScheduler.scheduleNextCheck(this, settingsManager.updateFrequency)
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
@@ -90,6 +96,9 @@ class DhikrApplication : Application() {
                         this,
                         android.content.ComponentName(this, com.Crescent.DhikrCounter.service.FloatingCounterTileService::class.java)
                     )
+                }
+                if (key == "pref_update_frequency") {
+                    com.Crescent.DhikrCounter.utils.UpdateScheduler.scheduleNextCheck(this, settingsManager.updateFrequency)
                 }
                 if (key == "active_session_id" || key.startsWith("pref_widget_") || (key.startsWith("pref_") && !key.startsWith("pref_glass_") && !key.startsWith("pref_bubble_"))) {
                     updateAllWidgets(this@DhikrApplication)
