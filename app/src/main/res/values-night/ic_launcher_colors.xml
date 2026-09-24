@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Night overrides. Only the pearl surfaces are softened; green, red, beads and ink stay identical so the icon keeps its identity. -->
+<resources>
+    <!-- Pearl tile: same artwork, calmer luminance so it does not glare on a dark launcher -->
+    <color name="ic_launcher_pearl_start">#E9EDEB</color>
+    <color name="ic_launcher_pearl_mid">#DFE4E1</color>
+    <color name="ic_launcher_pearl_end">#CFD7D3</color>
+    <color name="ic_launcher_tray">#66C3CEC8</color>
+    <color name="ic_launcher_rim">#80FFFFFF</color>
+    <color name="ic_launcher_sage_start">#5E8979</color>
+    <color name="ic_launcher_sage_mid">#86A798</color>
+    <color name="ic_launcher_sage_end">#B4CBC0</color>
+
+    <!-- Dial disc: keeps its lightness so the ink keeps its contrast, only softened -->
+    <color name="ic_launcher_disc_center">#F8FAF9</color>
+    <color name="ic_launcher_disc_edge">#E6EBE8</color>
+    <color name="ic_launcher_disc_stroke">#C6D1CC</color>
+</resources>

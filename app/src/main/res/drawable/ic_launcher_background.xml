@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pearl glass tile, full bleed. Tray and sage swoosh share the foreground's reference-space transform. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Pearl base -->
+    <path
+        android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="108" android:endY="108">
+                <item android:offset="0" android:color="@color/ic_launcher_pearl_start" />
+                <item android:offset="0.5" android:color="@color/ic_launcher_pearl_mid" />
+                <item android:offset="1" android:color="@color/ic_launcher_pearl_end" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <group
+        android:scaleX="0.062"
+        android:scaleY="0.062"
+        android:translateX="15.56"
+        android:translateY="10.85">
+        <!-- Soft bead tray, lower left -->
+        <path
+            android:fillColor="@color/ic_launcher_tray"
+            android:pathData="M470,462C340,458 205,530 196,700C190,880 290,1030 520,1066C690,1090 815,1064 862,1032L850,905C790,850 700,838 656,838Z" />
+        <!-- Tray glass edge -->
+        <path
+            android:strokeColor="@color/ic_launcher_rim"
+            android:strokeWidth="4"
+            android:strokeLineCap="round"
+            android:pathData="M470,462C340,458 205,530 196,700C190,880 290,1030 520,1066C690,1090 815,1064 862,1032" />
+        <!-- Sage swoosh, right and bottom (extends past the tile so any mask stays filled) -->
+        <path
+            android:pathData="M1500,330C1300,350 1170,400 1136,480C1124,560 1100,620 1058,665C1010,722 940,745 912,800C890,845 892,900 897,960C902,1020 880,1070 800,1132C770,1152 720,1190 640,1240L560,1300L440,1500L1500,1500Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="1100" android:startY="470" android:endX="900" android:endY="1120">
+                    <item android:offset="0" android:color="@color/ic_launcher_sage_start" />
+                    <item android:offset="0.55" android:color="@color/ic_launcher_sage_mid" />
+                    <item android:offset="1" android:color="@color/ic_launcher_sage_end" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- Swoosh glass edge -->
+        <path
+            android:strokeColor="@color/ic_launcher_rim"
+            android:strokeWidth="5"
+            android:strokeLineCap="round"
+            android:pathData="M1500,330C1300,350 1170,400 1136,480C1124,560 1100,620 1058,665C1010,722 940,745 912,800C890,845 892,900 897,960C902,1020 880,1070 800,1132C770,1152 720,1190 640,1240L560,1300" />
+    </group>
+</vector>

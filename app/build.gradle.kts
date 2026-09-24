@@ -10,6 +10,10 @@ android {
     compileSdk = 37
 
     defaultConfig {
+        ndk {
+            abiFilters += "arm64-v8a"
+            abiFilters += "armeabi-v7a"
+        }
         applicationId = "com.Crescent.DhikrCounter"
         minSdk = 31
         targetSdk = 36
@@ -48,9 +52,8 @@ android {
 
 dependencies {
     implementation(libs.activity.ktx)
-    implementation(libs.appcompat)
-    implementation(libs.constraintlayout)
-    implementation(libs.material)
+            implementation(libs.material)
+    implementation(libs.preference)
     
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
@@ -84,12 +87,9 @@ dependencies {
     compileOnly(libs.kyant.backdrop)
 
     // Navigation
-    implementation(libs.navigation.fragment)
-    implementation(libs.navigation.ui)
-    
+            
     // Preference
-    implementation(libs.preference)
-    
+        
     // Lifecycle
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.viewmodel.compose)
@@ -102,3 +102,4 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
 }
+

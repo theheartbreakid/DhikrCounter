@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher-icon palette sampled from the reference artwork. Fixed brand colours: the icon is self-contained and does not follow the app theme or dynamic colour. -->
+<resources>
+    <!-- Pearl tile -->
+    <color name="ic_launcher_pearl_start">#FCF8F5</color>
+    <color name="ic_launcher_pearl_mid">#F6F3F0</color>
+    <color name="ic_launcher_pearl_end">#ECEEEC</color>
+    <color name="ic_launcher_tray">#70E3E8E5</color>
+    <color name="ic_launcher_rim">#B3FFFFFF</color>
+    <color name="ic_launcher_sage_start">#78A091</color>
+    <color name="ic_launcher_sage_mid">#A5BFB3</color>
+    <color name="ic_launcher_sage_end">#D6E3DC</color>
+
+    <!-- Dial disc -->
+    <color name="ic_launcher_disc_center">#FFFFFF</color>
+    <color name="ic_launcher_disc_edge">#EEF1EF</color>
+    <color name="ic_launcher_disc_stroke">#DAE1DD</color>
+
+    <!-- Deep green (ring, crescent, tassel) -->
+    <color name="ic_launcher_green_light">#3A7F6B</color>
+    <color name="ic_launcher_green_mid">#1D4A3E</color>
+    <color name="ic_launcher_green_dark">#072A22</color>
+    <color name="ic_launcher_green_deep">#08231D</color>
+    <color name="ic_launcher_tassel_green">#0D3B33</color>
+
+    <!-- Bead spheres -->
+    <color name="ic_launcher_bead_highlight">#5B8F80</color>
+    <color name="ic_launcher_bead_body">#17493E</color>
+    <color name="ic_launcher_bead_shadow">#082922</color>
+    <color name="ic_launcher_bead_deep">#041712</color>
+
+    <!-- Red (arc, guide bead, tassel) -->
+    <color name="ic_launcher_red_glow">#4DFF2A35</color>
+    <color name="ic_launcher_red_glow_clear">#00FF2A35</color>
+    <color name="ic_launcher_red_highlight">#FF8A8C</color>
+    <color name="ic_launcher_red">#E0202E</color>
+    <color name="ic_launcher_red_dark">#A00E1E</color>
+    <color name="ic_launcher_tassel_red_light">#E23A4C</color>
+    <color name="ic_launcher_tassel_red">#B00F26</color>
+    <color name="ic_launcher_tassel_red_dark">#7E0818</color>
+
+    <!-- Ink and highlights -->
+    <color name="ic_launcher_ink">#141A1E</color>
+    <color name="ic_launcher_gloss">#66FFFFFF</color>
+    <color name="ic_launcher_gloss_strong">#B3FFFFFF</color>
+
+    <!-- Themed (monochrome) layer: the launcher tints it, only alpha is used -->
+    <color name="ic_launcher_monochrome_ink">#FF000000</color>
+</resources>
