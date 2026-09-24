@@ -74,7 +74,7 @@ fun UpdateDialogs(
                 onDismissRequest = { updateManager.resetState() },
                 backdrop = backdrop,
                 title = "You're Up to Date",
-                message = "Dhikr Counter is on the latest version (${state.currentVersionName}, build ${state.currentVersionCode}).",
+                message = "Version ${state.currentVersionName}",
                 positiveText = "OK",
                 negativeText = null,
                 onPositive = { updateManager.resetState() },
@@ -85,12 +85,12 @@ fun UpdateDialogs(
 
         is UpdateState.CheckError -> {
             val error = state.error
-            var showDetails by remember { mutableStateOf(false) }
 
             LiquidDialog(
                 onDismissRequest = { updateManager.resetState() },
                 backdrop = backdrop,
                 title = "Unable to Check for Updates",
+                message = error.message,
                 positiveText = if (error.canRetry) "Retry" else "OK",
                 negativeText = "Dismiss",
                 onPositive = {
@@ -104,128 +104,7 @@ fun UpdateDialogs(
                 },
                 icon = Icons.Outlined.ErrorOutline,
                 iconTint = MaterialTheme.colorScheme.error
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = error.message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = adaptiveColor
-                    )
-
-                    // Diagnostic info section
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(adaptiveColor.copy(alpha = 0.05f))
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Internet:", style = MaterialTheme.typography.labelMedium, color = adaptiveColor.copy(alpha = 0.6f))
-                            Text(
-                                if (updateManager.isNetworkAvailable()) "Connected" else "Offline",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = if (updateManager.isNetworkAvailable()) Color(0xFF10B981) else MaterialTheme.colorScheme.error
-                            )
-                        }
-
-                        if (error.httpStatus != null) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("HTTP Status:", style = MaterialTheme.typography.labelMedium, color = adaptiveColor.copy(alpha = 0.6f))
-                                Text("${error.httpStatus}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = adaptiveColor)
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("GitHub Server:", style = MaterialTheme.typography.labelMedium, color = adaptiveColor.copy(alpha = 0.6f))
-                            Text(
-                                if (error is UpdateError.DnsError || error is UpdateError.Timeout || error is UpdateError.ConnectionError) "Unreachable" else "Reached",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = if (error is UpdateError.DnsError || error is UpdateError.Timeout || error is UpdateError.ConnectionError) MaterialTheme.colorScheme.error else Color(0xFF10B981)
-                            )
-                        }
-                    }
-
-                    // Fallback to view release on GitHub in browser
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                val url = error.requestUrl ?: UpdateManager.RELEASES_PAGE_URL
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                context.startActivity(intent)
-                            }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "View Release on GitHub",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Icon(
-                            Icons.AutoMirrored.Outlined.OpenInNew,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-
-                    // Expandable technical details
-                    if (!error.technicalDetails.isNullOrBlank()) {
-                        Row(
-                            modifier = Modifier
-                                .clickable { showDetails = !showDetails }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (showDetails) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                                contentDescription = null,
-                                tint = adaptiveColor.copy(alpha = 0.5f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                if (showDetails) "Hide Technical Details" else "Technical Details",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = adaptiveColor.copy(alpha = 0.6f)
-                            )
-                        }
-
-                        AnimatedVisibility(visible = showDetails) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(adaptiveColor.copy(alpha = 0.08f))
-                                    .padding(8.dp)
-                            ) {
-                                Text(
-                                    text = error.technicalDetails ?: "",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-                                    color = adaptiveColor.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            )
         }
 
         is UpdateState.UpdateAvailable -> {

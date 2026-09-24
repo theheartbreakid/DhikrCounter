@@ -783,7 +783,6 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
         item(key = "card_updates") {
             val app = context.applicationContext as DhikrApplication
             val currentVersionName = remember { app.updateManager.getCurrentVersionName() }
-            val currentVersionCode = remember { app.updateManager.getCurrentVersionCode() }
             val lastCheckedStr = remember(lastUpdateCheckTimestamp) {
                 if (lastUpdateCheckTimestamp > 0L) {
                     SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(Date(lastUpdateCheckTimestamp))
@@ -828,7 +827,7 @@ fun SettingsScreen(viewModel: CounterViewModel = viewModel()) {
                                     color = if (isChecking) adaptiveColor.copy(alpha = 0.5f) else adaptiveColor,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Text("Last checked: $lastCheckedStr • Current: v$currentVersionName (#$currentVersionCode)", style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.5f))
+                                Text("Last checked: $lastCheckedStr • Current: v$currentVersionName", style = MaterialTheme.typography.bodySmall, color = adaptiveColor.copy(alpha = 0.5f))
                             }
                         }
                         if (isChecking) {
